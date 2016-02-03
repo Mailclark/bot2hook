@@ -1,0 +1,17 @@
+bot2hook_rabbitmq:
+  ports:
+    - "8082:15672"
+  environment:
+    RABBITMQ_DEFAULT_USER: slack
+    RABBITMQ_DEFAULT_PASS: bot
+
+bot2hook_lasp:
+  volumes:
+    - ./bot2hook_lasp/apache2:/apache2
+  links:
+    - bot2hook_rabbitmq
+  environment:
+    APP_ENV: dev
+    VIRTUAL_HOST: bot2hook.local
+  extra_hosts:
+     - "yourdomain.ext:172.17.0.1"

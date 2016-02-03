@@ -1,0 +1,15 @@
+bot2hook_rabbitmq:
+  image: rabbitmq:3.5-management
+  container_name: bot2hook_rabbitmq
+  hostname: bot2hook_rabbitmq
+  volumes:
+    - ../storage/rabbitmq:/var/lib/rabbitmq/mnesia/rabbit@bot2hook_rabbitmq
+
+bot2hook_lasp:
+  build: ./bot2hook_lasp
+  container_name: bot2hook_lasp
+  volumes:
+    - ../:/http
+    - ./bot2hook_lasp/supervisor:/supervisor
+  environment:
+    APP_ENV: prod

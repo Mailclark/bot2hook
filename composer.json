@@ -1,0 +1,21 @@
+{
+    "name": "clubble/bot2hook",
+    "description": "Bot2Hook",
+    "require": {
+        "devristo/phpws": "dev-master",
+        "videlalvaro/php-amqplib": "^2.6",
+        "php-curl-class/php-curl-class": "^4.8",
+        "catfan/Medoo": "^1.0"
+    },
+    "repositories": [
+        {
+            "type": "vcs",
+            "url": "https://github.com/Devristo/phpws"
+        }
+    ],
+    "autoload": {
+   		"psr-0": {
+   			"Bot2Hook": "app/classes/"
+   		}
+   	}
+}
