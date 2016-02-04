@@ -30,14 +30,25 @@ class Bot implements \JsonSerializable
     /** @var int */
     protected $client_incremental = 1;
 
-    public function __construct($team_id, $bot_id, $bot_token, array $users_token, array $room = [])
+    public function __construct($data)
+    {
+        if (is_array($data)) {
+            if (isset($data['team_id']) && isset($data['bot_id'])) {
+                $this->setIds($data['team_id'], $data['bot_id']);
+            }
+            $this->bot_token = $data['bot_token'];
+            $this->users_token = isset($data['users_token']) && is_array($data['users_token']) ? $data['users_token'] : [];
+            $this->rooms = isset($data['rooms']) && is_array($data['rooms']) ? $data['rooms'] : [];
+        } else {
+            $this->bot_token = $data;
+        }
+    }
+
+    public function setIds($team_id, $bot_id)
     {
         $this->id = $team_id.':'.$bot_id;
         $this->team_id = $team_id;
         $this->bot_id = $bot_id;
-        $this->bot_token = $bot_token;
-        $this->users_token = $users_token;
-        $this->rooms = $room;
     }
 
     public function getJsonRooms()
@@ -155,7 +166,13 @@ class Bot implements \JsonSerializable
                 $rooms[$i] = new Room($room);
             }
         }
-        return new static($data['tb_team_id'], $data['tb_bot_id'], $data['tb_bot_token'], $users_token, $rooms);
+        return new static([
+            'team_id' => $data['tb_team_id'],
+            'bot_id' => $data['tb_bot_id'],
+            'bot_token' => $data['tb_bot_token'],
+            'users_token' => $users_token,
+            'rooms' => $rooms
+        ]);
     }
 
     public function jsonSerialize()

@@ -22,16 +22,16 @@ class Incoming extends ConsumerAbstract
             if (!isset($body['bot'])) {
                 throw new \Exception('No bot key in incoming rabbit message');
             }
-            $this->addTeam($body['bot'], $this->logger);
+            $this->addBot($body['bot'], $this->logger);
         } catch (\Exception $e) {
             $this->retry($e, $this->config['rabbit_incoming_queue'], $msg, $retry);
         }
     }
 
-    static public function addTeam($bot, Logger $logger)
+    static public function addBot($bot, Logger $logger)
     {
-        if (!is_array($bot) || !isset($bot['team_id']) || !isset($bot['bot_id']) || !isset($bot['bot_token'])) {
-            throw new \Exception('invalid_team');
+        if (is_array($bot) && !isset($bot['bot_token'])) {
+            throw new \Exception('no_bot_token');
         }
 
         $loop = Factory::create();

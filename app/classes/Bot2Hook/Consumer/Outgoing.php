@@ -25,7 +25,7 @@ class Outgoing extends ConsumerAbstract
             $signature = new Signature($this->signature_key);
             $curl = new Curl();
             $curl->setHeader('X-BOT2HOOK-SIGNATURE', $signature->generate($this->config['webhook_url'], $data));
-            $response = $curl->get($this->config['webhook_url'], $data);
+            $response = $curl->post($this->config['webhook_url'], $data);
             if (empty($response) || !is_object($response) || empty($response->ok)) {
                 $error = "Outgoing webhook error. ";
                 if (empty($response)) {

@@ -14,6 +14,9 @@ class Signature
 
     public function isValid($signature, $uri, array $params)
     {
+        if (empty($this->key)) {
+            return true;
+        }
         $signature_computed = $this->generate($uri, $params);
         return $signature_computed == $signature;
     }

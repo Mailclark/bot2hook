@@ -1,9 +1,9 @@
 <?php
 
-if (!defined('APP_ENV') && !empty($_SERVER['APP_ENV'])) {
-    define('APP_ENV', $_SERVER['APP_ENV']);
+if (!defined('CONF_FILE') && !empty($_SERVER['CONF_FILE'])) {
+    define('CONF_FILE', $_SERVER['CONF_FILE']);
 } else {
-    define('APP_ENV', 'prod');
+    exit('no CONF_FILE');
 }
 
 require_once __DIR__.'/../vendor/autoload.php';
@@ -14,9 +14,7 @@ require_once __DIR__.'/../vendor/autoload.php';
 !defined('DB_FILE')  && define('DB_FILE', __DIR__.'/../db/bot2hook.sql');
 
 $config = require DIR_CONFIG."/global.php";
-if (defined('APP_ENV')) {
-    $config = array_replace_recursive($config, require DIR_CONFIG."/env/".APP_ENV.".php");
-}
+$config = array_replace_recursive($config, require DIR_CONFIG."/env/".CONF_FILE.".php");
 
 // set the error handling
 error_reporting($config['error_reporting']);

@@ -82,13 +82,8 @@ class Server
             if (is_array($data) && isset($data['type'])) {
                 switch ($data['type']) {
                     case 'add_bot':
-                        $this->logger->debug("New bot receive via incomming webhook " . $data['bot']['team_id'].':'.$data['bot']['bot_id']);
-                        $bot = new Bot(
-                            $data['bot']['team_id'],
-                            $data['bot']['bot_id'],
-                            $data['bot']['bot_token'],
-                            isset($data['bot']['users_token']) ? $data['bot']['users_token'] : []
-                        );
+                        $this->logger->debug("New bot receive via incomming webhook " . json_encode($data['bot']));
+                        $bot = new Bot($data['bot']);
                         $this->addSlackClient($bot);
                         break;
 
@@ -131,6 +126,18 @@ class Server
 
     public function addSlackClient(Bot $bot)
     {
+        if (empty($bot->id)) {
+            $this->logger->debug('Try to auth test for bot ' . $bot->bot_token);
+
+            try {
+                $auth = $this->authTest($bot->bot_token);
+                $bot->setIds($auth->team_id, $auth->user_id);
+            } catch (\Exception $e) {
+                $this->logger->err('Exception in Bot '.$bot->bot_token.' connexion : '.$e->getMessage()."\"".$e->getTraceAsString());
+                return;
+            }
+        }
+
         $this->updateTeamBot($bot);
         if (!isset($this->bots_connected[$bot->id])) {
             $this->logger->debug('Try to start client for bot ' . $bot->id);
@@ -307,6 +314,25 @@ class Server
         );
     }
 
+    protected function authTest($bot_token)
+    {
+        $this->logger->debug('Try auth.test for bot with token ' . $bot_token);
+
+        $response = $this->curl->get('https://slack.com/api/auth.test', [
+            'token' => $bot_token,
+        ]);
+        if (empty($response) || !is_object($response)) {
+            throw new \Exception();
+        }
+        if (!empty($response->ok)) {
+            $this->logger->debug('Success auth.test for bot with token ' . $bot_token);
+            return $response;
+        } else {
+            $this->logger->err('Fail auth.test for bot with token '.$bot_token.' error:'.$response->error);
+            throw new \Exception();
+        }
+    }
+
     protected function rtmStart(Bot $bot)
     {
         $this->logger->debug('Try rtm.start for bot '.$bot->id.' with token ' . $bot->bot_token);
@@ -357,7 +383,7 @@ class Server
     protected function groupHistory(Bot $bot, $group_id)
     {
         $group = $bot->rooms[$group_id];
-        $token = $bot->getToken($group['members']);
+        $token = $bot->getToken($group->members);
         if (empty($token)) {
             throw new NoMoreTokenException();
         }

@@ -16,7 +16,7 @@ return array(
         'register_exception_handler' => false,
         'stream' => [
             'priority' => Logger::DEBUG,
-            'uri' => DIR_LOGS.'/error-cli.log',
+            'uri' => DIR_LOGS.'/error.log',
         ],
     ],
 
@@ -34,6 +34,6 @@ return array(
         'delay_ping' => 10,
         'rabbit_outgoing_queue' => 'b2h_outgoing',
         'rabbit_incoming_queue' => '',
-        'webhook_url' => 'http://localhost/webhook_sample.php',
+        'webhook_url' => 'http://yourdomain.ext/webhook/bot2hook',
     ],
 );

@@ -2,6 +2,7 @@
 
 namespace Bot2Hook\Log;
 
+use Curl\Curl;
 use Zend\Log\Exception;
 use Zend\Log\Filter\Priority;
 use Zend\Log\Writer\AbstractWriter;
@@ -16,6 +17,9 @@ class SlackWriter extends AbstractWriter
     ];
 
     protected $channel = null;
+
+    /** @var Curl */
+    protected $curl;
 
     public function __construct($slack_config, $mode = null, $logSeparator = null)
     {
@@ -38,19 +42,13 @@ class SlackWriter extends AbstractWriter
         }
 
         $this->formatter = new SlackFormatter();
+        $this->curl = new Curl();
     }
+
 
     protected function doWrite(array $event)
     {
         $data = array_merge($this->slack_config, $this->formatter->format($event));
-        $ch = curl_init();
-        curl_setopt_array($ch, [
-            CURLOPT_POST => 1,
-            CURLOPT_HEADER => 0,
-            CURLOPT_URL => "https://slack.com/api/chat.postMessage",
-            CURLOPT_POSTFIELDS => http_build_query($data)
-        ]);
-        curl_exec($ch);
-        curl_close($ch);
+        $this->curl->post('https://slack.com/api/chat.postMessage', $data);
     }
 }

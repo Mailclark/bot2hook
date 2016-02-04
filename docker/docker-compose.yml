@@ -12,4 +12,4 @@ bot2hook_lasp:
     - ../:/http
     - ./bot2hook_lasp/supervisor:/supervisor
   environment:
-    APP_ENV: prod
+    CONF_FILE: prod
