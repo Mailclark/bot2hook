@@ -3,9 +3,9 @@
 use Zend\Log\Logger;
 
 return array(
-    'debug' => false,
     'error_reporting' => E_ALL & ~E_NOTICE,
     'display_errors' => false,
+    'debug' => false,
 
     'cmd_php' => 'php',
 

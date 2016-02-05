@@ -72,6 +72,8 @@ Normally, you should receive 3 messages in your log channel :
 > Boot2Hook consumer starting
 > phpws listening on tcp://0.0.0.0:12345
 
+Checkout [Docker-compose CLI documentation](https://docs.docker.com/compose/reference/overview/) for more commands. 
+
 ### Create a testing bot for your slack team
 
 Go to the bot configuration page in Slack App Directory: https://my.slack.com/apps/manage/A0F7YS25R-bots
@@ -92,8 +94,110 @@ Now your bot must be connected in your team. If you talk to it, you receive even
 
 ## Production
 
-Bot2hook is used in production to power [MailClark](https://mailclark.ai).
+Bot2Hook is used in production to power [MailClark](https://mailclark.ai).
 
-### Using Webhook
+We suggest you to make a directory like `sample/`
 
-### Using RabbitMQ
+#### Docker-compose file
+
+Write your own docker-compose file, helping you with the `sample/docker-compose.webhook.yml`.
+
+* Update the `bot2hook_rabbitmq` config, change the user and password to connect to RabbitMQ Management pages. You can also change the port (by default http://your.bot2hook.domain:8085)
+* Update `volumes`, replace `sample/` by the path to your files. Remove the third volume pointing to sample/public, only use for testing usage. 
+* Change the `CONF_FILE` value and use a label with meaning for you.
+* You can remove the `extra_hosts` part, it's only usefull because we use a local domain for testing.
+
+#### Apache conf
+
+Write your own, helping you with the  `sample/apache2/bot2hook.conf`. You can choose any name for this file, just keep the `.conf` extension.
+
+* Change the `CONF_FILE` with the same value that in the docker-compose file.
+* Change the `ServerName` with the domain that you choose to host your Bot2Hook instance.
+
+#### PHP configugration file
+
+Write your own, helping you with the  `sample/config/sample_webhook.conf`. Give it the same name that the `CONF_FILE` value, with the `.php` extension.
+
+* For production, we recommend to comment the lines `error_reporting`, `display_errors` and `debug`.
+* Fill the `signature_key` value with whatever you want!
+* Uncomment the logger part, like in testing, if you want to monitoring Bot2Hook in a Slack channel. Just change the priority for less verbose.
+* Uncomment the `server` part and change the `webhook_url` value with your URL where you want to receive webhooks.
+
+## Don't use Webhook, use only RabbitMQ
+ 
+Bot2Hook use RabbitMQ in background to queue events. You can switch webhook process and only use RabbitMQ. 
+[MailClark](https://mailclark.ai) use Bot2Hook in this way.
+ 
+To do that:
+
+* Do you own docker-compose base file, without the `bot2hook_rabbitmq` container
+* Don't mount a volume for apache configuration for the `bot2hook_lasp` container
+* In the `bot2hook_lasp` container config, link your RabbitMQ container in the section `links`
+* For the PHP config file, use the  `sample/config/sample_rabbithook.conf` to write your own
+    * Modify the `rabbitmq` part with your RabbitMQ configuration
+    * In the `server` part, you can change the name of the queue you want to use to add bot to Bot2Hook  
+
+### API
+
+#### Outgoing message
+
+Each time a bot receive an event from Slack, Bot2Hook post to your webhook URL. 
+ 
+```
+[
+    'webhook_event' => [
+        'type' => 'event_type',
+        'bot' => 'BOT_ID',
+        'team' => 'TEAM_ID',
+        'event' => [
+            //... Same event receive from Slack
+        ],
+    ]
+]
+```
+
+For event and type keys, check the [Slack API documentation](https://api.slack.com/events).
+
+You can also receive webhook_event with those types:
+
+* `channel_recovery` (5 keys: `type`, `bot`, `team`, `channel` and `latest`) when Bot2Hook has missed message in a channel and can't recover them.
+* `group_recovery` (5 keys: `type`, `bot`, `team`, `group` and `latest`) when Bot2Hook has missed message in a group and can't recover them.
+* `bot_disabled` (3 keys: `type`, `bot` and `team`) when Bot2Hook receive an error indicate that the bot token has been invalidate.
+    
+
+#### Add bot
+
+To add a bot in Bot2Hook, 2 choices:
+
+```
+[
+    'bot' => 'the-bot-token',
+]
+```
+
+or 
+
+```
+[
+    'bot' => [
+        'bot_id' => 'BOT_ID',
+        'bot_token' => 'the-bot-token',
+        'team_id' => 'TEAM_ID',
+        'users_token' => [
+            'FIRST_USER_ID' => 'first-user-token',
+            'SECOND_USER_ID' => 'second-user-token',
+        ],
+    ],
+]
+```
+
+`users_token` are used by Bot2Hook to retrieve missing messages, with WEB API, when bot is disconnected (could happen). 
+Bot token don't have permission for that. 
+
+### Signature check
+
+When you send data to the add bot webhook, or when you receive data from Bot2Hook on your external webhook,
+you must use a signature to ensure the provenance.
+
+This signature is passed by the header `BOT2HOOK_SIGNATURE`. 
+Check `sample/public/webhook.php` and `app/classes/Bot2Hook/Signature.php` files to see how to generate or validate a signature.

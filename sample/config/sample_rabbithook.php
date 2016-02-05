@@ -14,6 +14,13 @@ return array(
         ],
     ],*/
 
+    'rabbitmq' => [
+        'host' => 'your_rabbitmq_server',
+        'port' => 5672,
+        'user' => 'youruser',
+        'password' => 'yourpass',
+    ],
+
     'server' => [
         'webhook_url' => '',
         'rabbit_incoming_queue' => 'b2h_incoming_hook',
