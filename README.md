@@ -1,6 +1,12 @@
 # Bot2Hook
 
-Turn Slack bots’ RTM events into webhooks — powered by Docker containers
+Turn Slack bots’ Real-Time Messaging events into webhooks — powered by Docker containers. Brought to you by the makers of [MailClark](https://mailclark.ai).
+
+Ready to create a Slack bot, but not-so-ready to code a RTM app? Don’t worry, code your app as you always do, and let Bot2Hook take care of RTM. Thanks to Bot2Hook, developing a bot is as easy as developing a slash command app.
+
+Bot2Hook is written in PHP, but you only need to know Docker to run it.
+
+An alternative solution is [Relax](https://github.com/zerobotlabs/relax) by our friends at Nestor.
 
 ## Prerequisites
 
@@ -88,7 +94,7 @@ Normally, you should receive a wave of new messages in your log channel, and at 
 
 > Sample webhook event received: 
 
-Following by the json of the `rtm_start` event.
+Following by the json of the rtmStart event.
 
 Now your bot must be connected in your team. If you talk to it, you receive event for your messages in the log channel.
 
@@ -96,14 +102,14 @@ Now your bot must be connected in your team. If you talk to it, you receive even
 
 Bot2Hook is used in production to power [MailClark](https://mailclark.ai).
 
-We suggest you to create a directory for your app by copying `sample/`.
+We suggest you to make a directory like `sample/`
 
 #### Docker-compose file
 
 Write your own docker-compose file, helping you with the `sample/docker-compose.webhook.yml`.
 
 * Update the `bot2hook_rabbitmq` config, change the user and password to connect to RabbitMQ Management pages. You can also change the port (by default http://your.bot2hook.domain:8085)
-* Update `volumes`, replace `sample/` by the path to your files. Remove the third volume pointing to `sample/public`, only use for testing usage. 
+* Update `volumes`, replace `sample/` by the path to your files. Remove the third volume pointing to sample/public, only use for testing usage. 
 * Change the `CONF_FILE` value and use a label with meaning for you.
 * You can remove the `extra_hosts` part, it's only usefull because we use a local domain for testing.
 
@@ -137,9 +143,9 @@ To do that:
     * Modify the `rabbitmq` part with your RabbitMQ configuration
     * In the `server` part, you can change the name of the queue you want to use to add bot to Bot2Hook  
 
-## API
+### API
 
-### Outgoing message API
+#### Outgoing message
 
 Each time a bot receive an event from Slack, Bot2Hook post to your webhook URL. 
  
@@ -165,7 +171,7 @@ You can also receive webhook_event with those types:
 * `bot_disabled` (3 keys: `type`, `bot` and `team`) when Bot2Hook receive an error indicate that the bot token has been invalidate.
     
 
-### Add bot API
+#### Add bot
 
 To add a bot in Bot2Hook, 2 choices:
 
