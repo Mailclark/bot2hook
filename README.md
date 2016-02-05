@@ -1,6 +1,6 @@
 # Bot2Hook
 
-Slack bots containers, transforming RTM events to webhooks
+Turn Slack bots’ RTM events into webhooks — powered by Docker containers
 
 ## Prerequisites
 
@@ -17,7 +17,7 @@ cd bot2hook
 
 ### Storage directories 
 
-Execute those commands in root directory
+Execute these commands in root directory
 
 ```
 mkdir -m 777 -p storage
@@ -36,7 +36,7 @@ Execute `composer install` in root directory
 
 ### Define the local domain
 
-Edit the `/etc/hosts` file with your favorite editor and with root permission. 
+Edit the `/etc/hosts` file with your favorite editor and with root permissions. 
 Add this line in the file.
 
 ```
@@ -49,12 +49,12 @@ Go into the `sample/config/` directory. Copy the `sample_webhook.php` file into 
 
 Edit the new `testing_webhook.php` file. 
 
-Uncomment the `logger` part
+Uncomment the `logger` part.
  
 
 ### Define slack team for logger
 
-Go to https://api.slack.com/web, at the bottom of the page, create a personnal token associate to your team.
+Go to https://api.slack.com/web. At the bottom of the page, create a personnal token associate to your team.
 
 Copy this token and paste it in the subkey `token` of the `logger->slack` array of the new `testing_webhook.php` file.
 
@@ -68,9 +68,9 @@ docker-compose -f docker/docker-compose.yml -f sample/docker-compose.webhook.yml
 
 Normally, you should receive 3 messages in your log channel :
 
-> Boot2Hook server starting
-> Boot2Hook consumer starting
-> phpws listening on tcp://0.0.0.0:12345
+> Boot2Hook server starting<br />
+> Boot2Hook consumer starting<br />
+> phpws listening on tcp://0.0.0.0:12345  
 
 Checkout [Docker-compose CLI documentation](https://docs.docker.com/compose/reference/overview/) for more commands. 
 
