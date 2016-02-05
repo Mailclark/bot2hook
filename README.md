@@ -22,7 +22,7 @@ git https://github.com/Mailclark/bot2hook.git
 cd bot2hook
 ```
 
-### Storage directories 
+### Storage folders 
 
 Execute these commands in the root folder.
 
