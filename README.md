@@ -2,7 +2,8 @@
 
 Turn Slack bots’ Real-Time Messaging events into webhooks — powered by Docker containers. Brought to you by the makers of [MailClark](https://mailclark.ai).
 
-Ready to create a Slack bot, but not-so-ready to code a RTM app? Don’t worry, code your app as you always do, and let Bot2Hook take care of RTM. Thanks to Bot2Hook, developing a bot is as easy as developing a slash command app.
+Ready to create a Slack bot, but not-so-ready to code a RTM app? How will you maintain a bot across hundreds of teams?
+Don’t worry, code your app as you always do, and let Bot2Hook take care of RTM. Thanks to Bot2Hook, developing a bot is as easy as developing a slash command app.
 
 Bot2Hook is written in PHP, but you only need to know Docker to run it.
 
@@ -23,7 +24,7 @@ cd bot2hook
 
 ### Storage directories 
 
-Execute these commands in root directory
+Execute these commands in the root folder.
 
 ```
 mkdir -m 777 -p storage
@@ -36,14 +37,14 @@ mkdir -m 777 -p storage/rabbitmq
 
 ### Composer 
 
-Execute `composer install` in root directory
+Execute `composer install` in the root folder.
 
 ## Local testing
 
 ### Define the local domain
 
-Edit the `/etc/hosts` file with your favorite editor and with root permissions. 
-Add this line in the file.
+Edit the `/etc/hosts` file using your favorite editor, with root permissions. 
+Add this line to the file:
 
 ```
 127.0.0.1       bot2hook.local
@@ -51,62 +52,62 @@ Add this line in the file.
 
 ### PHP Config file
 
-Go into the `sample/config/` directory. Copy the `sample_webhook.php` file into a new `testing_webhook.php`.
+Go to the `sample/config/` folder. Copy the `sample_webhook.php` file into a new `testing_webhook.php`.
 
 Edit the new `testing_webhook.php` file. 
 
 Uncomment the `logger` part.
  
 
-### Define slack team for logger
+### Define the Slack team for logger
 
-Go to https://api.slack.com/web. At the bottom of the page, create a personnal token associate to your team.
+Go to https://api.slack.com/web. At the bottom of the page, create a personal token associated to your team.
 
-Copy this token and paste it in the subkey `token` of the `logger->slack` array of the new `testing_webhook.php` file.
+Copy and paste this token to the subkey `token` of the `logger->slack` array of the new `testing_webhook.php` file.
 
-In the subkey `channel`, indicate in which channel you ant to receive logs (ex `#debug`). This channel must exist.
+In the subkey `channel`, indicate the channel where to receive logs (e.g. `#debug`). It has to be an existing channel.
 
-### Starts docker containers
+### Start Docker containers
 
 ```
 docker-compose -f docker/docker-compose.yml -f sample/docker-compose.webhook.yml up -d
 ```
 
-Normally, you should receive 3 messages in your log channel :
+You should receive 3 messages in the log channel:
 
 > Boot2Hook server starting<br />
 > Boot2Hook consumer starting<br />
 > phpws listening on tcp://0.0.0.0:12345  
 
-Checkout [Docker-compose CLI documentation](https://docs.docker.com/compose/reference/overview/) for more commands. 
+Check out [Docker-compose CLI documentation](https://docs.docker.com/compose/reference/overview/) for more commands. 
 
-### Create a testing bot for your slack team
+### Create a test bot for your Slack team
 
-Go to the bot configuration page in Slack App Directory: https://my.slack.com/apps/manage/A0F7YS25R-bots
+Go to ‘Configure Bots’ page in Slack App Directory: https://my.slack.com/apps/manage/A0F7YS25R-bots
 
-Install a bot or configure a new one for your team:
+Install a bot, or configure a new one for your team:
 
-* First choose his name.
+* Choose his name.
 * Save the integration.
-* Call this page after change de `XXX`  by the new bot API Token you've just create: http://bot2hook.local/add_bot.php?bot=XXX
+* Go to http://bot2hook.local/add_bot.php?bot=XXX replacing `XXX` with the new bot API token you’ve just created. 
 
-Normally, you should receive a wave of new messages in your log channel, and at least have a message begining by 
+You should receive a wave of new messages in the log channel including, at least, a message beginning with: 
 
 > Sample webhook event received: 
 
-Following by the json of the rtmStart event.
+Followed by the JSON of the rtmStart event.
 
-Now your bot must be connected in your team. If you talk to it, you receive event for your messages in the log channel.
+The test bot’s status in your Slack team must be now ‘connected’. Talk to him, you’ll receive events for your messages in the log channel.
 
 ## Production
 
 Bot2Hook is used in production to power [MailClark](https://mailclark.ai).
 
-We suggest you to make a directory like `sample/`
+We suggest you create a folder e.g. `sample/`.
 
 #### Docker-compose file
 
-Write your own docker-compose file, helping you with the `sample/docker-compose.webhook.yml`.
+Write your own Docker-compose file, using `sample/docker-compose.webhook.yml` as a basis.
 
 * Update the `bot2hook_rabbitmq` config, change the user and password to connect to RabbitMQ Management pages. You can also change the port (by default http://your.bot2hook.domain:8085)
 * Update `volumes`, replace `sample/` by the path to your files. Remove the third volume pointing to sample/public, only use for testing usage. 
