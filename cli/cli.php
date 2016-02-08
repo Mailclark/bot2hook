@@ -16,8 +16,6 @@ use Bot2Hook\Rabbitmq;
 $config = require __DIR__.'/../app/bootstrap.php';
 
 $logger = new Logger($config['logger']);
-$logger->notice('Boot2Hook consumer starting');
-
 $rabbitmq = new Rabbitmq($config['rabbitmq']);
 
 try {
@@ -27,6 +25,7 @@ try {
             $body = $argv[2];
             $retry = isset($argv[3]) ? $argv[3] : 0;
 
+            $logger->debug('Boot2Hook consume outgoing queue');
             $outgoing = new Outgoing($config['server'], $rabbitmq, $logger, $config['signature_key']);
             $outgoing->process($body, $retry);
             break;
@@ -35,6 +34,7 @@ try {
             $body = $argv[2];
             $retry = isset($argv[3]) ? $argv[3] : 0;
 
+            $logger->debug('Boot2Hook consume incoming queue');
             $incoming = new Incoming($config['server'], $rabbitmq, $logger);
             $incoming->process($body, $retry);
             break;
