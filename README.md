@@ -116,7 +116,6 @@ We suggest you create a folder e.g. `sample/`.
 
 Write your own Docker-compose file, using `sample/docker-compose.webhook.yml` as a basis.
 
-* Update the `bot2hook_rabbitmq` config, change the user and password to connect to RabbitMQ Management pages. You can also change the port (by default http://your.bot2hook.domain:8085)
 * Update `volumes`, replace `sample/` by the path to your files. Remove the third volume pointing to sample/public, only use for testing usage. 
 * Change the `CONF_FILE` value and use a label with meaning for you.
 * You can remove the `extra_hosts` part, it's only usefull because we use a local domain for testing.

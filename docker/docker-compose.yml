@@ -1,5 +1,5 @@
 bot2hook_rabbitmq:
-  image: rabbitmq:3.5-management
+  image: rabbitmq:3.6
   container_name: bot2hook_rabbitmq
   hostname: bot2hook_rabbitmq
   volumes:
