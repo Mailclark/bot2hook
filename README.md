@@ -108,6 +108,8 @@ You’ll receive a wave of new messages in the log channel, including a message 
 
 Followed by the JSON of the rtmStart event.
 
+### Talk to your bot!
+
 The test bot must now appear as connected in your Slack team. Talk to him, you’ll receive the events corresponding to your messages in the log channel.
 
 ## Configuration
@@ -154,35 +156,9 @@ Check `sample/public/webhook.php` and `app/classes/Bot2Hook/Signature.php` files
 
 ## API
 
-### Outgoing message
+### Add a new bot
 
-Each time a bot receive an event from Slack, Bot2Hook post to your webhook URL. 
- 
-```
-[
-    'webhook_event' => [
-        'type' => 'event_type',
-        'bot' => 'BOT_ID',
-        'team' => 'TEAM_ID',
-        'event' => [
-            //... Same event receive from Slack
-        ],
-    ]
-]
-```
-
-For event and type keys, check the [Slack API documentation](https://api.slack.com/events).
-
-You can also receive webhook_event with those types:
-
-* `channel_recovery` (5 keys: `type`, `bot`, `team`, `channel` and `latest`) when Bot2Hook has missed message in a channel and can't recover them.
-* `group_recovery` (5 keys: `type`, `bot`, `team`, `group` and `latest`) when Bot2Hook has missed message in a group and can't recover them.
-* `bot_disabled` (3 keys: `type`, `bot` and `team`) when Bot2Hook receive an error indicate that the bot token has been invalidate.
-    
-
-### Add bot
-
-To add a bot in Bot2Hook, 2 choices:
+To add a bot to Bot2Hook, 2 options:
 
 ```
 [
@@ -206,8 +182,32 @@ or
 ]
 ```
 
-`users_token` are used by Bot2Hook to retrieve missing messages, with WEB API, when bot is disconnected (could happen). 
-Bot token don't have permission for that. 
+The `users_token` is used by Bot2Hook to retrieve missing messages, using Slack Web API, when a bot is disconnected (it does happen). This operation isn't allowed with a bot token. 
+
+### Receiving messages
+
+When a bot receives an event from Slack, Bot2Hook posts it to your webhook URL. 
+ 
+```
+[
+    'webhook_event' => [
+        'type' => 'event_type',
+        'bot' => 'BOT_ID',
+        'team' => 'TEAM_ID',
+        'event' => [
+            //... Same event receive from Slack
+        ],
+    ]
+]
+```
+
+For event and type keys, read [Slack API documentation](https://api.slack.com/events).
+
+You can also receive webhook_event with those types:
+
+* `channel_recovery` (5 keys: `type`, `bot`, `team`, `channel` and `latest`) when Bot2Hook has missed message in a channel and can't recover them.
+* `group_recovery` (5 keys: `type`, `bot`, `team`, `group` and `latest`) when Bot2Hook has missed message in a group and can't recover them.
+* `bot_disabled` (3 keys: `type`, `bot` and `team`) when Bot2Hook receive an error indicate that the bot token has been invalidate.
 
 ## Use RabbitMQ only (no webhooks)
  
