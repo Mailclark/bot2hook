@@ -7,6 +7,13 @@ Don’t worry, code your app as you always do, and let Bot2Hook take care of RTM
 
 Bot2Hook is written in PHP, but you only need to know Docker to run it.
 
+Bot2hook have 3 master components: 
+* First is a service which open websocket client connection for each bot. 
+  Each time a bot receive an event, the service push it in a RabbitMQ queue. 
+  This service also open a websocket server connection, with which he can receive message to add bot.
+* Second service is a consumer which consume all RabbitMQ queues and launch separate process.
+* A incoming hook to call for adding bot in the system. This hook can be a webhook (default) or a RabbitMQ queue.  
+
 An alternative solution is [Relax](https://github.com/zerobotlabs/relax) by our friends at Nestor.
 
 ## Prerequisites
