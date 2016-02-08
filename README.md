@@ -2,14 +2,24 @@ README.md
 
 # Bot2Hook
 
-Turn Slack bots’ Real-Time Messaging events into webhooks — powered by Docker containers. Brought to you by the makers of [MailClark](https://mailclark.ai).
+Turn Slack bots’ Real-Time Messaging events into webhooks — powered by Docker containers. Brought to you by the makers of [MailClark](https://mailclark.ai) (Bot2Hook is used in production to power MailClark).
 
 Ready to create a Slack bot, but not-so-ready to code a RTM app? How will you maintain a bot across hundreds of teams?
 Don’t worry, code your app as you always do, and let Bot2Hook take care of RTM. Thanks to Bot2Hook, developing a bot is as easy as developing a slash command app.
 
-Bot2Hook is written in PHP, but you only need to know Docker to run it.
+Bot2Hook is written in PHP and uses RabbitMQ, but **you only need to know Docker** to run it.
 
 An alternative solution is [Relax](https://github.com/zerobotlabs/relax) by our friends at Nestor.
+
+## Under the hood
+Bot2Hook has three main components: 
+
+1. An incoming hook called to add new bots to the system. It can either be a webhook (default), or a RabbitMQ queue.
+2. A service which opens a websocket client connection for each bot:
+ * When a bot receives an event, this service pushes it to a RabbitMQ queue.
+ * This service also opens a websocket server connection, used to receive ‘add a new bot’ messages.
+3. A consumer which consumes all RabbitMQ queues and launches separate processes.
+
 
 ## Prerequisites
 
@@ -41,7 +51,7 @@ mkdir -m 777 -p storage/rabbitmq
 
 Execute `composer install` in the root folder.
 
-## Local testing
+## Testing Boot2Hook
 
 ### Define the local domain
 
@@ -100,11 +110,9 @@ Followed by the JSON of the rtmStart event.
 
 The test bot must now appear as connected in your Slack team. Talk to him, you’ll receive the events corresponding to your messages in the log channel.
 
-## In production
+## Configuration
 
-Bot2Hook is used in production to power [MailClark](https://mailclark.ai).
-
-We recommend you keep the `sample/` folder for future reference. Duplicate it and rename the new folder.
+We recommend to keep the `sample/` folder for future reference. Duplicate it and rename the new folder.
 
 ### Docker-compose file
 
@@ -136,23 +144,17 @@ Edit `your_conf_folder/config/sample_webhook.php`. Name this file with `CONF_FIL
  * Update `priority` to be less notified (e.g. `Logger:CRIT` — check out [Logger documentation](http://framework.zend.com/manual/current/en/modules/zend.log.overview.html#using-built-in-priorities)).
 * Uncomment the `server` part and update `webhook_url` with the URL to receive webhooks.
 
-## Use RabbitMQ only (no webhooks)
- 
-Bot2Hook use RabbitMQ in background to queue events. You can switch webhook process and only use RabbitMQ. 
-[MailClark](https://mailclark.ai) use Bot2Hook in this way.
- 
-To do that:
+### Signature check
 
-* Do you own docker-compose base file, without the `bot2hook_rabbitmq` container
-* Don't mount a volume for apache configuration for the `bot2hook_lasp` container
-* In the `bot2hook_lasp` container config, link your RabbitMQ container in the section `links`
-* For the PHP config file, use the  `sample/config/sample_rabbithook.conf` to write your own
-    * Modify the `rabbitmq` part with your RabbitMQ configuration
-    * In the `server` part, you can change the name of the queue you want to use to add bot to Bot2Hook  
+When you send data to the add bot webhook, or when you receive data from Bot2Hook on your external webhook,
+you must use a signature to ensure the provenance.
 
-### API
+This signature is passed by the header `BOT2HOOK_SIGNATURE`. 
+Check `sample/public/webhook.php` and `app/classes/Bot2Hook/Signature.php` files to see how to generate or validate a signature.
 
-#### Outgoing message
+## API
+
+### Outgoing message
 
 Each time a bot receive an event from Slack, Bot2Hook post to your webhook URL. 
  
@@ -178,7 +180,7 @@ You can also receive webhook_event with those types:
 * `bot_disabled` (3 keys: `type`, `bot` and `team`) when Bot2Hook receive an error indicate that the bot token has been invalidate.
     
 
-#### Add bot
+### Add bot
 
 To add a bot in Bot2Hook, 2 choices:
 
@@ -207,12 +209,16 @@ or
 `users_token` are used by Bot2Hook to retrieve missing messages, with WEB API, when bot is disconnected (could happen). 
 Bot token don't have permission for that. 
 
-### Signature check
+## Use RabbitMQ only (no webhooks)
+ 
+Bot2Hook use RabbitMQ in background to queue events. You can switch webhook process and only use RabbitMQ. 
+[MailClark](https://mailclark.ai) use Bot2Hook in this way.
+ 
+To do that:
 
-When you send data to the add bot webhook, or when you receive data from Bot2Hook on your external webhook,
-you must use a signature to ensure the provenance.
-
-This signature is passed by the header `BOT2HOOK_SIGNATURE`. 
-Check `sample/public/webhook.php` and `app/classes/Bot2Hook/Signature.php` files to see how to generate or validate a signature.
-
-Proofreading, almost done
+* Do you own docker-compose base file, without the `bot2hook_rabbitmq` container
+* Don't mount a volume for apache configuration for the `bot2hook_lasp` container
+* In the `bot2hook_lasp` container config, link your RabbitMQ container in the section `links`
+* For the PHP config file, use the  `sample/config/sample_rabbithook.conf` to write your own
+    * Modify the `rabbitmq` part with your RabbitMQ configuration
+    * In the `server` part, you can change the name of the queue you want to use to add bot to Bot2Hook
