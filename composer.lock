@@ -4,8 +4,8 @@
         "Read more about it at https://getcomposer.org/doc/01-basic-usage.md#composer-lock-the-lock-file",
         "This file is @generated automatically"
     ],
-    "hash": "db8021dec236c3d32d975fd022a66c74",
-    "content-hash": "abfd6b789513532ca355a1cf868c9320",
+    "hash": "18ca5e3d3b4604463f050b0e70ae75e4",
+    "content-hash": "e4293654a43ae79f64255ded01732026",
     "packages": [
         {
             "name": "catfan/medoo",
@@ -95,12 +95,12 @@
             "source": {
                 "type": "git",
                 "url": "https://github.com/Devristo/phpws.git",
-                "reference": "5c495fa15555c8a4eb40c000e28ab6205d72e7f7"
+                "reference": "3166c21bdce4a84937ab9e42564a85acb6c2b5db"
             },
             "dist": {
                 "type": "zip",
-                "url": "https://api.github.com/repos/Devristo/phpws/zipball/5c495fa15555c8a4eb40c000e28ab6205d72e7f7",
-                "reference": "5c495fa15555c8a4eb40c000e28ab6205d72e7f7",
+                "url": "https://api.github.com/repos/Devristo/phpws/zipball/3166c21bdce4a84937ab9e42564a85acb6c2b5db",
+                "reference": "3166c21bdce4a84937ab9e42564a85acb6c2b5db",
                 "shasum": ""
             },
             "require": {
@@ -127,7 +127,7 @@
                 "source": "https://github.com/Devristo/phpws/tree/master",
                 "issues": "https://github.com/Devristo/phpws/issues"
             },
-            "time": "2015-07-10 14:59:37"
+            "time": "2016-02-08 15:53:28"
         },
         {
             "name": "evenement/evenement",
