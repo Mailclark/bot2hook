@@ -2,8 +2,8 @@
 
 Turn Slack bots’ Real-Time Messaging events into webhooks — powered by Docker containers. Brought to you by the makers of [MailClark](https://mailclark.ai) (Bot2Hook is used in production to power MailClark).
 
-Ready to create a Slack bot, but not-so-ready to code a RTM app? How will you maintain a bot across hundreds of teams?
-Don’t worry, code your app as you always do, and let Bot2Hook take care of RTM. Thanks to Bot2Hook, developing a bot is as easy as developing a slash command app.
+Ready to create a Slack bot, but not-so-ready to code a RTM app? Wondering how you’re going to maintain a bot across hundreds of teams?<br />
+Don’t worry, **no need to change the way you code**, let Bot2Hook take care of RTM for you. Actually, with Bot2Hook, developing a bot is as easy as developing a slash command app.
 
 Bot2Hook is written in PHP and uses RabbitMQ, but **you only need to know Docker** to run it.
 
@@ -66,7 +66,7 @@ Go to the `sample/config/` folder. Copy the `sample_webhook.php` file into a new
 
 Edit the new `testing_webhook.php` file. 
 
-Uncomment the `logger` part.
+Uncomment the `logger` section.
 
 ### Define the Slack team for Logger
 
@@ -136,21 +136,21 @@ Edit `your_conf_folder/apache2/bot2hook.conf`. Rename this file if you like—ju
 
 ### PHP config file
 
-Edit `your_conf_folder/config/sample_webhook.php`. Name this file with `CONF_FILE` value (found in both the docker-compose and Apache config files), keep the `.php` extension.
+Edit `your_conf_folder/config/sample_webhook.php`. Name this file with the `CONF_FILE` value (found in both the docker-compose and Apache config files), keep the `.php` extension.
 
 * In production, we recommend you comment the following lines: `error_reporting`, `display_errors`, `debug`.
-* Choose a `signature_key` used for encryption purposes. Your pet’s name will do ;)
-* Uncomment the `logger` part if — as for local testing — you want to monitor Bot2Hook activity in a Slack channel.
+* Choose a `signature_key`, used for encryption purposes. Your pet’s name will do ;)
+* Uncomment the `logger` section if — as for local testing — you want to monitor Bot2Hook activity in a Slack channel.
  * Update `priority` to be less notified (e.g. `Logger:CRIT` — check out [Logger documentation](http://framework.zend.com/manual/current/en/modules/zend.log.overview.html#using-built-in-priorities)).
-* Uncomment the `server` part and update `webhook_url` with the URL to receive webhooks.
+* Uncomment the `server` section and update `webhook_url` with the URL to receive webhooks.
 
 ### Signature check
 
-When you send data to the add bot webhook, or when you receive data from Bot2Hook on your external webhook,
-you must use a signature to ensure the provenance.
+Whenever you send data to the ‘add a new bot’ webhook, or Bot2Hook sends data to your external webhook, a signature must used for the data’s origin to be certified.
 
-This signature is passed by the header `BOT2HOOK_SIGNATURE`. 
-Check `sample/public/webhook.php` and `app/classes/Bot2Hook/Signature.php` files to see how to generate or validate a signature.
+This signature is passed in the `BOT2HOOK_SIGNATURE` header. 
+
+Have a look at `sample/public/webhook.php` and `app/classes/Bot2Hook/Signature.php` to see how to generate or validate a signature.
 
 ## API
 
@@ -180,7 +180,7 @@ or
 ]
 ```
 
-The `users_token` is used by Bot2Hook to retrieve missing messages, using Slack Web API, when a bot is disconnected (it does happen). This operation isn't allowed with a bot token. 
+The `users_token` is used by Bot2Hook to retrieve missing messages, using Slack Web API, when a bot gets disconnected (it does happen). This operation isn't allowed with a bot token. 
 
 ### Receiving messages
 
@@ -201,22 +201,22 @@ When a bot receives an event from Slack, Bot2Hook posts it to your webhook URL.
 
 For event and type keys, read [Slack API documentation](https://api.slack.com/events).
 
-You can also receive webhook_event with those types:
+There are also three Bot2Hook-specific event types:
 
-* `channel_recovery` (5 keys: `type`, `bot`, `team`, `channel` and `latest`) when Bot2Hook has missed message in a channel and can't recover them.
-* `group_recovery` (5 keys: `type`, `bot`, `team`, `group` and `latest`) when Bot2Hook has missed message in a group and can't recover them.
-* `bot_disabled` (3 keys: `type`, `bot` and `team`) when Bot2Hook receive an error indicate that the bot token has been invalidate.
+* `channel_recovery` (5 keys: `type`, `bot`, `team`, `channel` and `latest`) when Bot2Hook has missed messages in a channel and isn’t able to recover them.
+* `group_recovery` (5 keys: `type`, `bot`, `team`, `group` and `latest`) when Bot2Hook has missed messages in a group and isn’t able to recover them.
+* `bot_disabled` (3 keys: `type`, `bot` and `team`) when Bot2Hook receives an error indicating that the bot token has been revoked.
 
 ## Use RabbitMQ only (no webhooks)
  
-Bot2Hook use RabbitMQ in background to queue events. You can switch webhook process and only use RabbitMQ. 
-[MailClark](https://mailclark.ai) use Bot2Hook in this way.
+Bot2Hook uses RabbitMQ in the background to queue events. You can actually disable webhook processes and use RabbitMQ only. 
+[MailClark](https://mailclark.ai) uses Bot2Hook in this way.
  
-To do that:
+To do so:
 
-* Do you own docker-compose base file, without the `bot2hook_rabbitmq` container
-* Don't mount a volume for apache configuration for the `bot2hook_lasp` container
-* In the `bot2hook_lasp` container config, link your RabbitMQ container in the section `links`
-* For the PHP config file, use the  `sample/config/sample_rabbithook.conf` to write your own
-    * Modify the `rabbitmq` part with your RabbitMQ configuration
-    * In the `server` part, you can change the name of the queue you want to use to add bot to Bot2Hook
+* Write your own docker-compose base file, without the `bot2hook_rabbitmq` container.
+    * In the `bot2hook_lasp` section, update `links` with your RabbitMQ container.
+    * In the `bot2hook_lasp` section, don’t mount a volume for the Apache configuration.
+* Write your own PHP config file, using `sample/config/sample_rabbithook.conf` as a basis.
+    * Update the `rabbitmq` section with your RabbitMQ configuration.
+    * In the `server` section, you may change the name of the queue used to add bots to Bot2Hook.
