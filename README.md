@@ -157,7 +157,7 @@ Have a look at `sample/public/webhook.php` and `app/classes/Bot2Hook/Signature.p
 
 To add a bot to Bot2Hook, 2 options:
 
-```
+```php
 [
     'bot' => 'the-bot-token',
 ]
@@ -165,7 +165,7 @@ To add a bot to Bot2Hook, 2 options:
 
 or 
 
-```
+```php
 [
     'bot' => [
         'bot_id' => 'BOT_ID',
@@ -185,7 +185,7 @@ The `users_token` is used by Bot2Hook to retrieve missing messages, using Slack 
 
 When a bot receives an event from Slack, Bot2Hook posts it to your webhook URL. 
  
-```
+```php
 [
     'webhook_event' => [
         'type' => 'event_type',
