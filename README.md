@@ -1,12 +1,11 @@
-# Bot2Hook
+![Bot2Hook - Turn Slack bots’ Real-Time Messaging events into webhooks — powered by Docker containers and brought to you by the makers of MailClark](https://mailclark.ai/static/img/logos/bot2hook.png)
 
-Turn Slack bots’ Real-Time Messaging events into webhooks — powered by Docker containers. Brought to you by the makers of [MailClark](https://mailclark.ai) (Bot2Hook is used in production to power MailClark).
-
-Ready to create a Slack bot, but not-so-ready to code a RTM app? Wondering how you’re going to maintain a bot across hundreds of teams?<br />
+Ready to create a Slack bot, but not-so-ready to code a Real-Time Messaging app? Wondering how you’re going to maintain a bot across hundreds of teams?<br />
 Don’t worry, **no need to change the way you code**, let Bot2Hook take care of RTM for you. Thanks to Bot2Hook, developing a bot is as easy as developing a slash command app.
 
 Bot2Hook is written in PHP and uses RabbitMQ, but **you only need to know Docker** to run it.
 
+Bot2Hook is brought to you by the makers of [MailClark](https://mailclark.ai) (we use it in production).<br />
 An alternative solution is [Relax](https://github.com/zerobotlabs/relax) by our friends at Nestor.
 
 ## Under the hood
