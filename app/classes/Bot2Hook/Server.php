@@ -154,6 +154,9 @@ class Server
 
                 $slack_client->on("message", function (WebSocketMessage $message) use ($bot) {
                     $data = json_decode($message->getData(), true);
+                    if (!is_array($data) && !isset($data['type'])) {
+
+                    }
                     if ($data['type'] == 'message') {
                         $bot->updateRoomLatest($data['channel'], $data['ts']);
                         if (isset($data['subtype']) && $data['subtype'] == 'group_join') {
