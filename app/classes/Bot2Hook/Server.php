@@ -155,7 +155,8 @@ class Server
                 $slack_client->on("message", function (WebSocketMessage $message) use ($bot) {
                     $data = json_decode($message->getData(), true);
                     if (!is_array($data) && !isset($data['type'])) {
-
+                        $this->logger->warn('Client for bot '.$bot->id." recieve a message without type:\n".$message->getData());
+                        return;
                     }
                     if ($data['type'] == 'message') {
                         $bot->updateRoomLatest($data['channel'], $data['ts']);
