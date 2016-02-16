@@ -250,6 +250,7 @@ class Server
                 ]);
                 $this->removeTeamBot($bot);
                 unset($this->bots_connected[$bot->id]);
+                unset($this->bots_retrying[$bot->id]);
             } catch (\Exception $e) {
                 $this->logger->err('Exception in Bot '.$bot->id.' connexion : '.$e->getMessage()."\"".$e->getTraceAsString());
                 $this->bots_retrying[$bot->id] = true;
