@@ -96,6 +96,20 @@ class Server
                             ],
                         ]));
                         break;
+
+                    case 'reporting':
+                        $user->sendString(json_encode([
+                            'memory' => [
+                                'usage' => memory_get_usage(true),
+                                'peak_usage' => memory_get_peak_usage(true),
+                                'limit' => $this->getMemoryLimit(),
+                            ],
+                            'bots_count' => [
+                                'connected' => count($this->bots_connected),
+                                'retrying' => count($this->bots_retrying),
+                            ],
+                        ]));
+                        break;
                 }
             }
         });
@@ -107,6 +121,22 @@ class Server
         $this->loop->run();
     }
 
+    // http://stackoverflow.com/a/28978624/211204
+    protected function getMemoryLimit()
+    {
+        $limit = ini_get('memory_limit');
+        $last = strtolower($limit[strlen($limit)-1]);
+        switch($last) {
+            // The 'G' modifier is available since PHP 5.1.0
+            case 'g':
+                $limit *= 1024;
+            case 'm':
+                $limit *= 1024;
+            case 'k':
+                $limit *= 1024;
+        }
+        return $limit;
+    }
 
     protected function init()
     {
