@@ -405,6 +405,7 @@ class Server
             'token' => $token,
             'channel' => $channel_id,
             'oldest' => $channel->latest,
+            'inclusive' => 0,
         ]);
         try {
             $this->responseHistory($bot, $channel_id, $token, $response);
@@ -427,6 +428,7 @@ class Server
             'token' => $token,
             'channel' => $group_id,
             'oldest' => $group->latest,
+            'inclusive' => 0,
         ]);
         try {
             $this->responseHistory($bot, $group_id, $token, $response);
@@ -446,6 +448,7 @@ class Server
             'token' => $token,
             'channel' => $im_id,
             'oldest' => $im->latest,
+            'inclusive' => 0,
         ]);
 
         $this->responseHistory($bot, $im_id, $token, $response);
@@ -459,6 +462,7 @@ class Server
             'token' => $token,
             'channel' => $mpim_id,
             'oldest' => $mpim->latest,
+            'inclusive' => 0,
         ]);
 
         $this->responseHistory($bot, $mpim_id, $token, $response);
@@ -468,6 +472,13 @@ class Server
     {
         if ($response->ok) {
             $latest = null;
+            usort($response->messages, function($a, $b)
+            {
+                if ($a->ts == $b->ts) {
+                    return 0;
+                }
+                return ($a->ts < $b->ts) ? -1 : 1;
+            });
             foreach ($response->messages as $message) {
                 $message->channel = $room_id;
                 $this->publish($bot, [
