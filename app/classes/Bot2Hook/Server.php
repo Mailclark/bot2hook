@@ -486,6 +486,8 @@ class Server
                 $message->channel = $room_id;
                 $this->publish($bot, [
                     'type' => 'message',
+                    'from_recovery' => true,
+                    'last_from_recovery' => true,
                     'event' => $message,
                 ]);
                 $latest = $message->ts;
