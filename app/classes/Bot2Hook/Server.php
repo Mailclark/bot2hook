@@ -43,10 +43,6 @@ class Server
         $this->rabbitmq = $rabbitmq;
         $this->logger = $logger;
 
-
-        var_dump($this->config);
-
-
         exec('sqlite3 '.$this->config['sqlite_path'].' < '.DB_FILE);
         $this->database = new medoo([
             'database_type' => 'sqlite',
