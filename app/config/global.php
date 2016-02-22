@@ -35,5 +35,6 @@ return array(
         'rabbit_outgoing_queue' => 'b2h_outgoing',
         'rabbit_incoming_queue' => '',
         'webhook_url' => 'http://yourdomain.ext/webhook/bot2hook',
+        'events_excluded' => 'pong,reconnect_url,presence_change,hello',
     ],
 );

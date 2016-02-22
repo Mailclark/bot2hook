@@ -43,11 +43,18 @@ class Server
         $this->rabbitmq = $rabbitmq;
         $this->logger = $logger;
 
+
+        var_dump($this->config);
+
+
         exec('sqlite3 '.$this->config['sqlite_path'].' < '.DB_FILE);
         $this->database = new medoo([
             'database_type' => 'sqlite',
             'database_file' => $this->config['sqlite_path'],
         ]);
+        if (!is_array($this->config['events_excluded'])) {
+            $this->config['events_excluded'] = explode(',', $this->config['events_excluded']);
+        }
 
         $this->curl = new Curl();
 
@@ -202,7 +209,7 @@ class Server
                         ]);
 
                         $this->updateTeamBot($bot);
-                    } elseif (!in_array($data['type'], ['pong', 'reconnect_url', 'presence_change', 'user_typing', 'hello'])) {
+                    } elseif (!in_array($data['type'], $this->config['events_excluded'])) {
                         if ($data['type'] == 'group_joined') {
                             $bot->rooms[$data['channel']['id']] = new Room(['members' => $data['channel']['members']]);
                         }
