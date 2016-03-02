@@ -51,14 +51,6 @@ class Bot implements \JsonSerializable
         $this->bot_id = $bot_id;
     }
 
-    public function getJsonRooms()
-    {
-        $json = [];
-        foreach ($this->rooms as $room) {
-
-        }
-    }
-
     public function getRoom($room_id)
     {
         if (isset($this->rooms[$room_id])) {
@@ -142,6 +134,14 @@ class Bot implements \JsonSerializable
             $this->client = null;
             $this->client_incremental = 1;
         }
+    }
+
+    public function merge(self $old_bot)
+    {
+        $this->client = $old_bot->client;
+        $this->client_incremental = $old_bot->client_incremental;
+        $this->users_token = array_merge($old_bot->users_token, $this->users_token);
+        $this->rooms = array_merge($old_bot->rooms, $this->rooms);
     }
 
     public function clientSend(array $data)

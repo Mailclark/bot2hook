@@ -74,6 +74,7 @@ class Server
                         'type' => 'ping',
                     ]);
                     if (!$always_connected) {
+                        $this->logger->warn('Ping fail set to retry for bot '.$tb_id);
                         $this->setToRetry($this->bots[$tb_id]);
                     }
                 }
@@ -309,8 +310,7 @@ class Server
     protected function updateTeamBot(Bot $bot)
     {
         if (isset($this->bots[$bot->id])) {
-            $bot->users_token = array_merge($this->bots[$bot->id]->users_token, $bot->users_token);
-            $bot->rooms = array_merge($this->bots[$bot->id]->rooms, $bot->rooms);
+            $bot->merge($this->bots[$bot->id]);
             $this->bots[$bot->id] = $bot;
 
             $this->database->update('team_bot', [
