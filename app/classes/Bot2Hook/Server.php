@@ -192,7 +192,10 @@ class Server
                         $this->logger->warn('Client for bot '.$bot->id." recieve a message without type:\n".$message->getData());
                         return;
                     }
-                    if ($data['type'] == 'message') {
+                    if ($data['type'] == 'team_migration_started') {
+                        $this->logger->info("Team migration started for bot " . $bot->id);
+                        $this->setToRetry($this->bots[$bot->id]);
+                    } elseif ($data['type'] == 'message') {
                         $bot->updateRoomLatest($data['channel'], $data['ts']);
                         if (isset($data['subtype']) && $data['subtype'] == 'group_join') {
                             $bot->addRoomMember($data['channel'], $data['user']);
