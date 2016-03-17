@@ -193,7 +193,7 @@ class Server
                         return;
                     }
                     if ($data['type'] == 'team_migration_started') {
-                        $this->logger->info("Team migration started for bot " . $bot->id);
+                        $this->logger->notice("Team migration started for bot " . $bot->id);
                         $this->setToRetry($this->bots[$bot->id]);
                     } elseif ($data['type'] == 'message') {
                         $bot->updateRoomLatest($data['channel'], $data['ts']);
