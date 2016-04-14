@@ -152,9 +152,12 @@ class Server
             'tb_users_token',
             'tb_rooms',
         ]);
+        $timer = 0;
         foreach ($tbs as $tb) {
-            $bot = Bot::fromDb($tb);
-            $this->addSlackClient($bot);
+            $this->loop->addTimer($timer++, function() use ($tb) {
+                $bot = Bot::fromDb($tb);
+                $this->addSlackClient($bot);
+            });
         }
     }
 
