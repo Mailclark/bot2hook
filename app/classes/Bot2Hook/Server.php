@@ -232,7 +232,7 @@ class Server
                 });
 
                 $slack_client->on("connect", function () use ($bot, $slack_client) {
-                    $this->logger->debug("Client connect for bot " . $bot->id);
+                    $this->logger->notice("Client connect for bot " . $bot->id);
                     $this->bots_connected[$bot->id] = true;
                     unset($this->bots_retrying[$bot->id]);
                     $bot->setClient($slack_client);

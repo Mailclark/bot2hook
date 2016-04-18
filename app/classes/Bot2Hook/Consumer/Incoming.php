@@ -43,7 +43,7 @@ class Incoming extends ConsumerAbstract
         });
 
         $client->on("connect", function () use ($client, $loop, $logger, $bot) {
-            $logger->notice("Add team incoming webhook : ".json_encode($bot));
+            $logger->info("Add team incoming webhook : ".json_encode($bot));
             $loop->addTimer(2, function() use ($client, $loop, $bot) {
                 $message = [
                     'type' => 'add_bot',
