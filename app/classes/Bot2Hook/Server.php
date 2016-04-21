@@ -395,10 +395,10 @@ class Server
             $this->logger->debug('Success rtm.start for bot '.$bot->id.' with token ' . $bot->bot_token);
             return $response;
         } else {
-            $this->logger->err('Fail rtm.start for bot '.$bot->id.' with token '.$bot->bot_token.' error:'.$response->error);
             if ($this->isTokenError($response->error)) {
                 throw new InvalidTokenException($response->error);
             }
+            $this->logger->err('Fail rtm.start for bot '.$bot->id.' with token '.$bot->bot_token.' error:'.$response->error);
             throw new \Exception();
         }
     }
