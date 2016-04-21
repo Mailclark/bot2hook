@@ -3,6 +3,9 @@
 namespace Bot2Hook\Entity;
 
 use Bot2Hook\WebSocketClient;
+use Devristo\Phpws\Framing\WebSocketFrame;
+use Devristo\Phpws\Framing\WebSocketOpcode;
+use Devristo\Phpws\Protocol\WebSocketTransportHybi;
 
 class Bot implements \JsonSerializable
 {
@@ -144,10 +147,16 @@ class Bot implements \JsonSerializable
         $this->rooms = array_merge($old_bot->rooms, $this->rooms);
     }
 
-    public function clientSend(array $data)
+    public function clientSendPing()
     {
         if (!empty($this->client) && $this->client->getState() == WebSocketClient::STATE_CONNECTED) {
-            $this->client->send(json_encode(array_merge(['id' => $this->client_incremental++], $data)));
+            if($this->client instanceof WebSocketTransportHybi) {
+                $this->client->sendFrame(WebSocketFrame::create(WebSocketOpcode::PingFrame));
+            } else {
+                $this->client->send(json_encode(array_merge(['id' => $this->client_incremental++], [
+                    'type' => 'ping',
+                ])));
+            }
             return true;
         }
         return false;

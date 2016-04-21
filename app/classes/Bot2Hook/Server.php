@@ -70,9 +70,7 @@ class Server
         $this->loop->addPeriodicTimer($this->config['delay_ping'], function() {
             foreach ($this->bots_connected as $tb_id => $connected) {
                 if ($connected) {
-                    $always_connected = $this->bots[$tb_id]->clientSend([
-                        'type' => 'ping',
-                    ]);
+                    $always_connected = $this->bots[$tb_id]->clientSendPing();
                     if (!$always_connected) {
                         $this->logger->warn('Ping fail set to retry for bot '.$tb_id);
                         $this->setToRetry($this->bots[$tb_id]);
