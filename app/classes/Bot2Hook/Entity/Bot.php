@@ -150,13 +150,7 @@ class Bot implements \JsonSerializable
     public function clientSendPing()
     {
         if (!empty($this->client) && $this->client->getState() == WebSocketClient::STATE_CONNECTED) {
-            if($this->client instanceof WebSocketTransportHybi) {
-                $this->client->sendFrame(WebSocketFrame::create(WebSocketOpcode::PingFrame));
-            } else {
-                $this->client->send(json_encode(array_merge(['id' => $this->client_incremental++], [
-                    'type' => 'ping',
-                ])));
-            }
+            $this->client->sendFrame(WebSocketFrame::create(WebSocketOpcode::PingFrame));
             return true;
         }
         return false;
