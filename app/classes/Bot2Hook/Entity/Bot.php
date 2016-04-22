@@ -21,6 +21,12 @@ class Bot implements \JsonSerializable
     /** @var string */
     public $bot_token;
 
+    /** @var int */
+    public $batch_id;
+
+    /** @var int */
+    public $last_activity;
+
     /** @var array */
     public $users_token = [];
 
@@ -33,18 +39,16 @@ class Bot implements \JsonSerializable
     /** @var int */
     protected $client_incremental = 1;
 
-    public function __construct($data)
+    public function __construct(array $data)
     {
-        if (is_array($data)) {
-            if (isset($data['team_id']) && isset($data['bot_id'])) {
-                $this->setIds($data['team_id'], $data['bot_id']);
-            }
-            $this->bot_token = $data['bot_token'];
-            $this->users_token = isset($data['users_token']) && is_array($data['users_token']) ? $data['users_token'] : [];
-            $this->rooms = isset($data['rooms']) && is_array($data['rooms']) ? $data['rooms'] : [];
-        } else {
-            $this->bot_token = $data;
+        if (isset($data['team_id']) && isset($data['bot_id'])) {
+            $this->setIds($data['team_id'], $data['bot_id']);
         }
+        $this->bot_token = $data['bot_token'];
+        $this->batch_id = isset($data['batch_id']) ? $data['batch_id'] : null;
+        $this->last_activity = isset($data['last_activity']) ? $data['last_activity'] : null;
+        $this->users_token = isset($data['users_token']) && is_array($data['users_token']) ? $data['users_token'] : [];
+        $this->rooms = isset($data['rooms']) && is_array($data['rooms']) ? $data['rooms'] : [];
     }
 
     public function setIds($team_id, $bot_id)
@@ -173,6 +177,8 @@ class Bot implements \JsonSerializable
             'team_id' => $data['tb_team_id'],
             'bot_id' => $data['tb_bot_id'],
             'bot_token' => $data['tb_bot_token'],
+            'batch_id' => isset($data['batch_id']) ? $data['batch_id'] : null,
+            'last_activity' => isset($data['last_activity']) ? $data['last_activity'] : null,
             'users_token' => $users_token,
             'rooms' => $rooms
         ]);
@@ -185,6 +191,8 @@ class Bot implements \JsonSerializable
             'team_id' => $this->team_id,
             'bot_id' => $this->bot_id,
             'bot_token' => $this->bot_token,
+            'batch_id' => $this->batch_id,
+            'last_activity' => $this->last_activity,
             'users_token' => $this->users_token,
             'rooms' => $this->rooms,
         ];

@@ -10,5 +10,5 @@ $logger = new Logger($config['logger']);
 $logger->notice('Boot2Hook consumer starting');
 
 $rabbitmq = new Rabbitmq($config['rabbitmq']);
-$consumer = new Consumer($config['server'], $rabbitmq, $config['cmd_php']);
+$consumer = new Consumer($config['websocket'], $rabbitmq, $config['cmd_php']);
 $consumer->launch();

@@ -26,7 +26,7 @@ try {
             $retry = isset($argv[3]) ? $argv[3] : 0;
 
             $logger->debug('Boot2Hook consume outgoing queue');
-            $outgoing = new Outgoing($config['server'], $rabbitmq, $logger, $config['signature_key']);
+            $outgoing = new Outgoing($config['websocket'], $rabbitmq, $logger, $config['signature_key']);
             $outgoing->process($body, $retry);
             break;
 
@@ -35,7 +35,7 @@ try {
             $retry = isset($argv[3]) ? $argv[3] : 0;
 
             $logger->debug('Boot2Hook consume incoming queue');
-            $incoming = new Incoming($config['server'], $rabbitmq, $logger);
+            $incoming = new Incoming($config['websocket'], $rabbitmq, $logger);
             $incoming->process($body, $retry);
             break;
 
