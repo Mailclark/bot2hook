@@ -190,7 +190,7 @@ class Server
                 $slack_client->on("message", function (WebSocketMessage $message) use ($bot) {
                     $data = json_decode($message->getData(), true);
                     if (!is_array($data) || !isset($data['type'])) {
-                        $this->logger->warn('Client for bot '.$bot->id." receive a message without type:\n".$message->getData());
+                        $this->logger->info('Client for bot '.$bot->id." receive a message without type:\n".$message->getData());
                         return;
                     }
                     if ($data['type'] == 'team_migration_started') {
