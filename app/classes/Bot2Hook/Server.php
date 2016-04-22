@@ -62,9 +62,12 @@ class Server
         $server = new WebSocketServer($this->config['url'], $this->loop, $this->logger);
 
         $this->loop->addPeriodicTimer($this->config['delay_try_reconnect'], function() {
+            $timer = 0;
             foreach ($this->bots_retrying as $tb_id => $true) {
-                $this->logger->debug('Try to reconnect client for bot '.$tb_id);
-                $this->addSlackClient($this->bots[$tb_id]);
+                $this->loop->addTimer($timer++, function() use ($tb_id) {
+                    $this->logger->debug('Try to reconnect client for bot '.$tb_id);
+                    $this->addSlackClient($this->bots[$tb_id]);
+                });
             }
         });
         $this->loop->addPeriodicTimer($this->config['delay_ping'], function() {
