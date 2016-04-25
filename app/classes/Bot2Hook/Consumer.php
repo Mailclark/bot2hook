@@ -23,27 +23,12 @@ class Consumer
 
     public function launch()
     {
-        if (!empty($this->config['webhook_url'])) {
-            $this->rabbitmq->consume($this->config['rabbit_outgoing_queue'], array($this, 'outgoing'));
-        }
-        if (!empty($this->config['rabbit_incoming_queue'])) {
-            $this->rabbitmq->consume($this->config['rabbit_incoming_queue'], array($this, 'incoming'));
-        }
+        $this->rabbitmq->consume($this->config['rabbit_incoming_queue'], array($this, 'incoming'));
         try {
             $this->rabbitmq->waitLoop();
         } catch (AMQPRuntimeException $amqprre) {
             echo "AMQPRuntimeException:".$amqprre->getMessage()."\n";
         }
-    }
-
-    public function outgoing($msg)
-    {
-        $body = json_decode($msg->body);
-        $retry = empty($body->retry) ? 0 : $body->retry;
-
-        $this->rabbitmq->ack($msg);
-
-        $this->execute('b2h_outgoing', $msg->body, $retry);
     }
 
     public function incoming($msg)

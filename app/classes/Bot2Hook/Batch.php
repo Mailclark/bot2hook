@@ -26,10 +26,16 @@ class Batch
     protected $b2h_client;
 
     /** @var int */
+    protected $launch_at;
+
+    /** @var int */
     protected $batch_id;
 
     /** @var int */
     protected $batch_count;
+
+    /** @var bool */
+    protected $migration_status = false;
 
     /** @var Curl */
     protected $curl;
@@ -107,36 +113,69 @@ class Batch
             if (is_array($data) && isset($data['type'])) {
                 switch ($data['type']) {
                     case 'set_id':
+                        if (empty($data['batch_id'])) {
+                            $this->logger->err('Bot2hook batch receive an empty ID from bot2hook server, old ID='.$this->batch_id);
+                            $this->loop->addTimer(30, function() {
+                                $this->requestId();
+                            });
+                            break;
+                        }
+                        if (!empty($this->batch_id) && $data['batch_id'] != $this->batch_id) {
+                            if (!empty($data['batch_id'])) {
+                                foreach ($this->bots as $tb_id => $bot) {
+                                    $bot->batch_id = $data['batch_id'];
+                                    $this->updateTeamBot($bot);
+                                }
+                            }
+                        }
+                        $init = empty($this->batch_id);
+                        $this->launch_at = $data['launch_at'];
                         $this->batch_id = $data['batch_id'];
                         $this->batch_count = $data['batch_count'];
                         $this->logger->debug('Bot2hook batch receive from bot2hook server is ID '.$this->batch_id);
-                        $this->initFromDB();
+                        $init && $this->initFromDB();
                         break;
 
+                    case 'migration':
                     case 'add_bot':
                         $this->logger->debug('Bot2hook batch '.$this->batch_id.' receive from bot2hook server new bot '.json_encode($data['bot']));
-                        $tb_batch_id = floor(base_convert(substr($data['bot']['team_id'], 1), 36, 10) / $this->batch_count);
-                        if ($tb_batch_id != $this->batch_id) {
+                        if ($data['type'] == 'migration' || $data['bot']['batch_id'] == $this->batch_id) {
                             $bot = new Bot($data['bot']);
                             $this->updateTeamBot($bot);
                             $this->addSlackClient($bot);
                         }
                         break;
 
+                    case 'request_team':
+                        $this->batch_id = null;
+                        if (!empty($this->bots)) {
+                            $bot = array_shift($this->bots);
+                            $this->b2h_client->send(json_encode([
+                                'type' => 'migration',
+                                'bot' => $bot,
+                            ]));
+                        } else {
+                            $this->b2h_client->send(json_encode([
+                                'type' => 'migration',
+                                'bot' => null,
+                            ]));
+                        }
+                        break;
+
                     case 'request_status':
                         $this->b2h_client->send(json_encode([
                             'type' => 'status',
-                            'batch' => [
-                                'bots' => $this->bots,
-                                'bots_connected' => $this->bots_connected,
-                                'bots_retrying' => $this->bots_retrying,
-                            ],
+                            'batch' => $this->batch_id,
+                            'bots' => $this->bots,
+                            'bots_connected' => $this->bots_connected,
+                            'bots_retrying' => $this->bots_retrying,
                         ]));
                         break;
 
                     case 'request_reporting':
                         $this->b2h_client->send(json_encode([
                             'type' => 'reporting',
+                            'batch' => $this->batch_id,
                             'memory' => [
                                 'usage' => memory_get_usage(true),
                                 'peak_usage' => memory_get_peak_usage(true),
@@ -154,15 +193,26 @@ class Batch
 
         $this->b2h_client->on("close", function () {
             $this->logger->err('Bot2hook batch '.$this->batch_id.' loose connection to bot2hook server');
+            if (empty($this->batch_id)) {
+                exit('restart');
+            } else if ($this->migration_status) {
+                exit('restart');
+            }
         });
 
         $this->b2h_client->on("connect", function () {
-            $this->logger->notice('Bot2hook batch '.$this->batch_id.' connected to bot2hook server');
-            $this->b2h_client->send(json_encode([
-                'type' => 'request_id',
-                'batch_id' => $this->batch_id,
-            ]));
+            $this->requestId();
         });
+    }
+
+    protected function requestId()
+    {
+        $this->logger->notice('Bot2hook batch '.$this->batch_id.' connected to bot2hook server');
+        $this->b2h_client->send(json_encode([
+            'type' => 'request_id',
+            'launch_at' => $this->launch_at,
+            'batch_id' => $this->batch_id,
+        ]));
     }
 
     // http://stackoverflow.com/a/28978624/211204

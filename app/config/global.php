@@ -35,5 +35,7 @@ return array(
         'rabbit_outgoing_queue' => 'b2h_outgoing',
         'rabbit_incoming_queue' => 'b2h_add_bot',
         'events_excluded' => 'pong,reconnect_url,presence_change,hello',
+        'batch_count_total' => 1,
+        'batch_count_active' => 1,
     ],
 );
