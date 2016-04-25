@@ -63,7 +63,6 @@ Edit `your_conf_folder/docker-compose.webhook.yml`.
 
 Copy `app/config/global.php` in `app/config/env/` and rename it with the `CONF_FILE` value (found in both the docker-compose and Apache config files), keep the `.php` extension.
 
-* Choose a `signature_key`, used for encryption purposes. Your pet’s name will do ;)
 * Update the `rabbitmq` section with your RabbitMQ configuration.
 
 ## API

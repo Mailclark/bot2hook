@@ -9,8 +9,6 @@ return array(
 
     'cmd_php' => 'php',
 
-    'signature_key' => 'CHANGE THIS KEY !!',
-
     'logger' => [
         'register_error_handler' => false,
         'register_exception_handler' => false,
@@ -28,7 +26,7 @@ return array(
     ],
 
     'websocket' => [
-        'server_url' => 'tcp://0.0.0.0:12345',
+        'server_url' => 'ws://0.0.0.0:12345',
         'sqlite_path' => DIR_STORAGE.'/sqlite/bot2hook.db',
         'delay_try_reconnect' => 10,
         'delay_ping' => 10,
