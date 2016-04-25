@@ -8,6 +8,8 @@ bot2hook_rabbitmq:
 bot2hook_lasp:
   build: ./bot2hook_lasp
   container_name: bot2hook_lasp
+  links:
+    - bot2hook_rabbitmq
   volumes:
     - ../:/http
     - ./bot2hook_lasp/supervisor:/supervisor
