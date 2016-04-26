@@ -248,7 +248,7 @@ class Batch
         $timer = 0;
         foreach ($tbs as $tb) {
             if (empty($tb['tb_batch_id'])) {
-                $tb_batch_id = floor(base_convert(substr($tb['tb_team_id'], 1), 36, 10) / $this->batch_count);
+                $tb_batch_id = base_convert(substr($tb['tb_team_id'], 1), 36, 10) % $this->batch_count + 1;
             } else {
                 $tb_batch_id = $tb['tb_batch_id'];
             }
