@@ -71,10 +71,9 @@ class Batch
 
     public function launch()
     {
-        $this->connectToServer();
-
-        $this->loop->addPeriodicTimer(60, function() {
+        $this->loop->addPeriodicTimer(15, function() {
             if (empty($this->b2h_client) || $this->b2h_client->getState() == WebSocketClient::STATE_CLOSED) {
+                $this->logger->debug('Bot2hook batch retry connection to bot2hook server ' . (empty($this->b2h_client) ? 'null' : $this->b2h_client->getState()));
                 $this->connectToServer();
             }
         });
@@ -104,7 +103,13 @@ class Batch
 
     protected function connectToServer()
     {
-        $this->b2h_client = new WebSocketClient($this->config['server_url'], $this->loop, $this->logger);
+        $this->b2h_client = new WebSocketClient($this->config['url_for_client'], $this->loop, $this->logger);
+        $this->b2h_client->on("connect", function () {
+            $this->logger->debug('Bot2hook batch '.$this->batch_id.' connect to bot2hook server.');
+        });
+        $this->b2h_client->on("request", function($headers) {
+            $this->logger->debug('Bot2hook batch request.');
+        });
         $this->b2h_client->on("message", function (WebSocketMessage $message)  {
             $data = json_decode($message->getData(), true);
             $this->logger->debug('Bot2hook batch '.$this->batch_id.' receive from bot2hook server message ' . $message->getData());

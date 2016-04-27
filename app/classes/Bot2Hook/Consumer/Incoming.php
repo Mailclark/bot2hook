@@ -28,14 +28,14 @@ class Incoming extends ConsumerAbstract
         }
     }
 
-    static public function addBot($bot, Logger $logger)
+    public function addBot($bot, Logger $logger)
     {
         if (is_array($bot) && !isset($bot['bot_token'])) {
             throw new \Exception('no_bot_token');
         }
 
         $loop = Factory::create();
-        $client = new WebSocketClient('ws://0.0.0.0:12345/', $loop, $logger);
+        $client = new WebSocketClient($this->config['url_for_server'], $loop, $logger);
 
         $client->on("error", function () use ($loop, $logger) {
             $logger->err("Add team incoming webhook : can't connect to websocket server");

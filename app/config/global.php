@@ -26,7 +26,8 @@ return array(
     ],
 
     'websocket' => [
-        'server_url' => 'ws://0.0.0.0:12345',
+        'url_for_server' => 'tcp://0.0.0.0:12345',
+        'url_for_client' => 'ws://0.0.0.0:12345',
         'sqlite_path' => DIR_STORAGE.'/sqlite/bot2hook.db',
         'delay_try_reconnect' => 10,
         'delay_ping' => 10,

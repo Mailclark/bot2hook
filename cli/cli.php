@@ -14,7 +14,7 @@ $rabbitmq = new Rabbitmq($config['rabbitmq']);
 
 if (empty($task)) {
     $caller = implode(' ', $argv);
-    $logger->err("[CLI] Empty task provided in '$caller'\n", 3, DIR_LOGS.'/error-cli.log');
+    $logger->err('[CLI] Empty task provided in '.$caller);
     exit(1);
 }
 

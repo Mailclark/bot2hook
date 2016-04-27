@@ -64,7 +64,7 @@ class Server
 
     public function launch()
     {
-        $this->server = new WebSocketServer($this->config['server_url'], $this->loop, $this->logger);
+        $this->server = new WebSocketServer($this->config['url_for_server'], $this->loop, $this->logger);
 
         $this->server->on('message', function (WebSocketTransportInterface $client, WebSocketMessage $message) {
             $data = json_decode($message->getData(), true);
