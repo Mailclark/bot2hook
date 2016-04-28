@@ -5,6 +5,8 @@ namespace Bot2Hook;
 use Bot2Hook\Entity\Bot;
 use Bot2Hook\Entity\Room;
 use Curl\Curl;
+use Devristo\Phpws\Framing\WebSocketFrame;
+use Devristo\Phpws\Framing\WebSocketOpcode;
 use Devristo\Phpws\Messaging\WebSocketMessage;
 use medoo;
 use React\EventLoop\Factory;
@@ -71,7 +73,11 @@ class Batch
 
     public function launch()
     {
-        $this->loop->addPeriodicTimer(15, function() {
+        $this->loop->addTimer(15, function() {
+            $this->logger->debug('Bot2hook batch launch connection to bot2hook server.');
+            $this->connectToServer();
+        });
+        $this->loop->addPeriodicTimer(60, function() {
             if (empty($this->b2h_client) || $this->b2h_client->getState() == WebSocketClient::STATE_CLOSED) {
                 $this->logger->debug('Bot2hook batch retry connection to bot2hook server ' . (empty($this->b2h_client) ? 'null' : $this->b2h_client->getState()));
                 $this->connectToServer();
@@ -87,6 +93,9 @@ class Batch
             }
         });
         $this->loop->addPeriodicTimer($this->config['delay_ping'], function() {
+            if (!empty($this->b2h_client) && $this->b2h_client->getState() == WebSocketClient::STATE_CONNECTED) {
+                $this->b2h_client->sendFrame(WebSocketFrame::create(WebSocketOpcode::PingFrame));
+            }
             foreach ($this->bots_connected as $tb_id => $connected) {
                 if ($connected) {
                     $always_connected = $this->bots[$tb_id]->clientSendPing();
@@ -104,12 +113,6 @@ class Batch
     protected function connectToServer()
     {
         $this->b2h_client = new WebSocketClient($this->config['url_for_client'], $this->loop, $this->logger);
-        $this->b2h_client->on("connect", function () {
-            $this->logger->debug('Bot2hook batch '.$this->batch_id.' connect to bot2hook server.');
-        });
-        $this->b2h_client->on("request", function($headers) {
-            $this->logger->debug('Bot2hook batch request.');
-        });
         $this->b2h_client->on("message", function (WebSocketMessage $message)  {
             $data = json_decode($message->getData(), true);
             $this->logger->debug('Bot2hook batch '.$this->batch_id.' receive from bot2hook server message ' . $message->getData());
@@ -198,15 +201,17 @@ class Batch
         $this->b2h_client->on("close", function () {
             $this->logger->err('Bot2hook batch '.$this->batch_id.' loose connection to bot2hook server');
             if (empty($this->batch_id)) {
-                exit('restart');
+                exit("restart\n");
             } else if ($this->migration_status) {
-                exit('restart');
+                exit("restart\n");
             }
         });
 
         $this->b2h_client->on("connect", function () {
+            $this->logger->debug('Bot2hook batch '.$this->batch_id.' loose connected to bot2hook server');
             $this->requestId();
         });
+        $this->b2h_client->open();
     }
 
     protected function requestId()
@@ -248,6 +253,10 @@ class Batch
             'tb_users_token',
             'tb_rooms',
         ], [
+            'OR' => [
+                'tb_batch_id' => null,
+                'tb_batch_id[=]' => $this->batch_id,
+            ],
             'ORDER' => 'tb_last_activity DESC, tb_id DESC',
         ]);
         $timer = 0;
@@ -380,7 +389,7 @@ class Batch
                     }
                 }
 
-                $slack_client->open();
+                $slack_client->open(15);
             } catch (InvalidTokenException $ite) {
                 $this->logger->err('Bot2hook batch '.$this->batch_id.', bot '.$bot->id.' removed.');
                 $this->publish($bot, [

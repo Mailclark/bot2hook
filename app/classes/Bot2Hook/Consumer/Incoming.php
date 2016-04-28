@@ -35,7 +35,7 @@ class Incoming extends ConsumerAbstract
         }
 
         $loop = Factory::create();
-        $client = new WebSocketClient($this->config['url_for_server'], $loop, $logger);
+        $client = new WebSocketClient($this->config['url_for_client'], $loop, $logger);
 
         $client->on("error", function () use ($loop, $logger) {
             $logger->err("Add team incoming webhook : can't connect to websocket server");
