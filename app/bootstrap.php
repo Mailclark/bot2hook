@@ -12,6 +12,7 @@ require_once __DIR__.'/../vendor/autoload.php';
 !defined('DIR_STORAGE')  && define('DIR_STORAGE', __DIR__.'/../storage');
 !defined('DIR_LOGS')  && define('DIR_LOGS', __DIR__.'/../storage/logs');
 !defined('DB_FILE')  && define('DB_FILE', __DIR__.'/../db/bot2hook.sql');
+!defined('DB_FILE_MIGRATION')  && define('DB_FILE_MIGRATION', __DIR__.'/../db/v2_migration.sql');
 
 $config = require DIR_CONFIG."/global.php";
 $config = array_replace_recursive($config, require DIR_CONFIG."/env/".CONF_FILE.".php");

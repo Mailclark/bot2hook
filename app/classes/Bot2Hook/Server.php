@@ -6,6 +6,7 @@ use Bot2Hook\Entity\Bot;
 use Devristo\Phpws\Messaging\WebSocketMessage;
 use Devristo\Phpws\Protocol\WebSocketTransportInterface;
 use Devristo\Phpws\Server\WebSocketServer;
+use medoo;
 use React\EventLoop\Factory;
 
 class Server
@@ -55,6 +56,31 @@ class Server
         $this->batch_count_total = $config['batch_count_total'];
         $this->batch_count_active = $config['batch_count_active'];
 
+        if (is_file($this->config['sqlite_path'])) {
+            exec('sqlite3 '.$this->config['sqlite_path'].' < '.DB_FILE_MIGRATION);
+        } else {
+            exec('sqlite3 '.$this->config['sqlite_path'].' < '.DB_FILE);
+        }
+        $this->database = new medoo([
+            'database_type' => 'sqlite',
+            'database_file' => $this->config['sqlite_path'],
+        ]);
+        $tbs = $this->database->select('team_bot', [
+            'tb_id',
+            'tb_team_id',
+            'tb_batch_id',
+        ], [
+            'tb_batch_id' => null,
+        ]);
+        foreach ($tbs as $tb) {
+            $this->database->update('team_bot', [
+                'tb_batch_id' => $this->getBatchIdFromTeam($tb['tb_team_id']),
+            ], [
+                'tb_id' => $tb['tb_id'],
+            ]);
+        }
+        $this->logger->debug('Bot2hook server end upgrade DB');
+
         $this->loop = Factory::create();
 
         for ($i = 1; $i <= $this->batch_count_total; $i++) {
@@ -73,7 +99,7 @@ class Server
                 switch ($data['type']) {
                     case 'add_bot':
                         $this->logger->debug("Bot2hook server, new bot receive via incoming webhook " . json_encode($data['bot']));
-                        $data['bot']['batch_id'] = base_convert(substr($data['bot']['team_id'], 1), 36, 10) % $this->batch_count_active + 1;
+                        $data['bot']['batch_id'] = $this->getBatchIdFromTeam($data['bot']['team_id']);
                         foreach($this->server->getConnections() as $client_connexion) {
                             $client_connexion->sendString($message->getData());
                         }
@@ -182,7 +208,23 @@ class Server
                 }
             }
             if (!empty($batch_id)) {
+                $this->logger->warn('Bot2hook server, batch '.$batch_id.' disconnect');
                 $this->batchs[$batch_id] = null;
+                for ($i = $this->batch_count_active + 1; $i <= $this->batch_count_total; $i++) {
+                    if (!empty($this->batchs[$i])) {
+                        $this->batchs[$batch_id] = $this->batchs[$i];
+                        $this->batchs[$i] = null;
+                        $this->logger->warn('Bot2hook server, diconnected batch '.$batch_id.' assign to batch '.$i);
+                        $this->batchs[$batch_id]['client']->sendString(json_encode([
+                            'type' => 'set_id',
+                            'launch_at' => time(),
+                            'batch_id' => $batch_id,
+                            'force_init' => true,
+                            'batch_count' => $this->batch_count_active,
+                        ]));
+                        break;
+                    }
+                }
             } else {
                 $this->logger->warn('Bot2hook server, client '.$client->getId().' disconnect but not found in batchs array');
             }
@@ -190,7 +232,10 @@ class Server
 
         $this->server->bind();
 
-        $this->loop->addPeriodicTimer(60 * 60 * 24, function() {
+        $this->loop->addPeriodicTimer(60 * 60, function() {
+            if (date('N') > 5 && date('G') != 8) {
+                return;
+            }
             $oldest_batch_id = null;
             for ($i = 1; $i <= $this->batch_count_active; $i++) {
                 if (empty($this->batchs[$i])) {
@@ -242,5 +287,10 @@ class Server
                 $this->migration();
             }
         }
+    }
+
+    protected function getBatchIdFromTeam($team_id)
+    {
+        return base_convert(substr($team_id, 1), 36, 10) % $this->batch_count_active + 1;
     }
 }

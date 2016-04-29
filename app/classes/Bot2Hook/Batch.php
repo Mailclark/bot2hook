@@ -57,7 +57,6 @@ class Batch
         $this->rabbitmq = $rabbitmq;
         $this->logger = $logger;
 
-        exec('sqlite3 '.$this->config['sqlite_path'].' < '.DB_FILE);
         $this->database = new medoo([
             'database_type' => 'sqlite',
             'database_file' => $this->config['sqlite_path'],
@@ -73,7 +72,7 @@ class Batch
 
     public function launch()
     {
-        $this->loop->addTimer(15, function() {
+        $this->loop->addTimer(5, function() {
             $this->logger->debug('Bot2hook batch launch connection to bot2hook server.');
             $this->connectToServer();
         });
@@ -81,15 +80,6 @@ class Batch
             if (empty($this->b2h_client) || $this->b2h_client->getState() == WebSocketClient::STATE_CLOSED) {
                 $this->logger->debug('Bot2hook batch retry connection to bot2hook server ' . (empty($this->b2h_client) ? 'null' : $this->b2h_client->getState()));
                 $this->connectToServer();
-            }
-        });
-        $this->loop->addPeriodicTimer($this->config['delay_try_reconnect'], function() {
-            $timer = 0;
-            foreach ($this->bots_retrying as $tb_id => $true) {
-                $this->loop->addTimer($timer++, function() use ($tb_id) {
-                    $this->logger->debug('Bot2hook batch '.$this->batch_id.', try to reconnect client for bot '.$tb_id);
-                    $this->addSlackClient($this->bots[$tb_id]);
-                });
             }
         });
         $this->loop->addPeriodicTimer($this->config['delay_ping'], function() {
@@ -103,6 +93,15 @@ class Batch
                         $this->logger->warn('Bot2hook batch '.$this->batch_id.', ping fail set to retry for bot '.$tb_id);
                         $this->setToRetry($this->bots[$tb_id]);
                     }
+                }
+            }
+
+            $bot_connecting = count($this->bots_connected) - count(array_filter($this->bots_connected));
+            if ($bot_connecting < 1) {
+                $tb_id = array_shift($this->bots_retrying);
+                if (!empty($tb_id)) {
+                    $this->logger->debug('Bot2hook batch '.$this->batch_id.', try to reconnect client for bot '.$tb_id);
+                    $this->addSlackClient($this->bots[$tb_id]);
                 }
             }
         });
@@ -134,11 +133,11 @@ class Batch
                                 }
                             }
                         }
-                        $init = empty($this->batch_id);
+                        $init = empty($this->batch_id) || !empty($data['force_init']);
                         $this->launch_at = $data['launch_at'];
                         $this->batch_id = $data['batch_id'];
                         $this->batch_count = $data['batch_count'];
-                        $this->logger->debug('Bot2hook batch receive from bot2hook server is ID '.$this->batch_id);
+                        $this->logger->debug('Bot2hook batch receive from bot2hook server is ID '.$this->batch_id.', init :'.$init);
                         $init && $this->initFromDB();
                         break;
 
@@ -208,15 +207,21 @@ class Batch
         });
 
         $this->b2h_client->on("connect", function () {
-            $this->logger->debug('Bot2hook batch '.$this->batch_id.' loose connected to bot2hook server');
+            $this->logger->notice('Bot2hook batch '.$this->batch_id.' connected to bot2hook server');
             $this->requestId();
         });
-        $this->b2h_client->open();
+        $this->b2h_client->open()->otherwise(function() {
+            $this->loop->addTimer(5, function() {
+                if (empty($this->b2h_client) || $this->b2h_client->getState() == WebSocketClient::STATE_CLOSED) {
+                    $this->logger->debug('Bot2hook batch retry connection to bot2hook server ' . (empty($this->b2h_client) ? 'null' : $this->b2h_client->getState()));
+                    $this->connectToServer();
+                }
+            });
+        });
     }
 
     protected function requestId()
     {
-        $this->logger->notice('Bot2hook batch '.$this->batch_id.' connected to bot2hook server');
         $this->b2h_client->send(json_encode([
             'type' => 'request_id',
             'launch_at' => $this->launch_at,
@@ -253,35 +258,42 @@ class Batch
             'tb_users_token',
             'tb_rooms',
         ], [
-            'OR' => [
-                'tb_batch_id' => null,
-                'tb_batch_id[=]' => $this->batch_id,
-            ],
+            'tb_batch_id' => $this->batch_id,
             'ORDER' => 'tb_last_activity DESC, tb_id DESC',
         ]);
-        $timer = 0;
-        foreach ($tbs as $tb) {
-            if (empty($tb['tb_batch_id'])) {
-                $tb_batch_id = base_convert(substr($tb['tb_team_id'], 1), 36, 10) % $this->batch_count + 1;
+        $end = false;
+        $init_bot = function() use (&$tbs, &$init_bot, &$end) {
+            if (empty($tbs)) {
+                !$end && $this->logger->debug('Bot2hook batch '.$this->batch_id.', end init');
+                $end = true;
+                return;
+            }
+            $bot_connecting = count($this->bots_connected) - count(array_filter($this->bots_connected));
+            if ($bot_connecting < $this->config['concurrent_connecting_count']) {
+                $tb = array_shift($tbs);
+                if (!empty($tb)) {
+                    $bot = Bot::fromDb($tb);
+                    $this->bots[$bot->id] = $bot;
+                    $this->logger->debug('Bot2hook batch '.$this->batch_id.', init bot '.$tb['tb_id'].' ('.count($this->bots).' bots, remaining '.count($tbs).')');
+                    $this->addSlackClient($bot, $init_bot);
+                    $this->loop->addTimer(1, $init_bot);
+                } else {
+                    $this->logger->debug('Bot2hook batch '.$this->batch_id.', end init');
+                }
             } else {
-                $tb_batch_id = $tb['tb_batch_id'];
+                $this->loop->addTimer(1, $init_bot);
             }
-            if ($tb_batch_id != $this->batch_id) {
-                continue;
-            }
-            $this->loop->addTimer($timer++, function() use ($tb) {
-                $bot = Bot::fromDb($tb);
-                $this->addSlackClient($bot);
-            });
-        }
+        };
+        $init_bot();
     }
 
-    public function addSlackClient(Bot $bot)
+    public function addSlackClient(Bot $bot, $connected_callback = null)
     {
         if (!isset($this->bots_connected[$bot->id])) {
             $this->logger->debug('Bot2hook batch '.$this->batch_id.', try to start client for bot ' . $bot->id);
 
             $this->bots_connected[$bot->id] = false;
+
             try {
                 $start = $this->rtmStart($bot);
                 $this->publish($bot, [
@@ -338,13 +350,16 @@ class Batch
                     $this->setToRetry($bot);
                 });
 
-                $slack_client->on("connect", function () use ($bot, $slack_client) {
+                $slack_client->on("connect", function () use ($bot, $slack_client, $connected_callback) {
                     $this->logger->notice('Bot2hook batch '.$this->batch_id.', client connected for bot '.$bot->id);
                     $this->bots_connected[$bot->id] = true;
                     $bot->batch_id = $this->batch_id;
                     $this->updateTeamBot($bot);
                     unset($this->bots_retrying[$bot->id]);
                     $bot->setClient($slack_client);
+                    if (!empty($connected_callback) && is_callable($connected_callback)) {
+                        $connected_callback();
+                    }
                 });
 
                 foreach ($start->channels as $channel) {
@@ -389,7 +404,14 @@ class Batch
                     }
                 }
 
-                $slack_client->open(15);
+                $slack_client->open(15)->otherwise(function($e) use ($bot) {
+                    if ($e instanceof \Exception) {
+                        $this->logger->err('Bot2hook batch '.$this->batch_id.', promise exception in Bot '.$bot->id.' during connexion : '.get_class($e).' '.$e->getMessage()."\n".$e->getTraceAsString());
+                    } else {
+                        $this->logger->err('Bot2hook batch '.$this->batch_id.', promise error for bot '.$bot->id.' during connexion'.$e);
+                    }
+                    $this->setToRetry($bot);
+                });
             } catch (InvalidTokenException $ite) {
                 $this->logger->err('Bot2hook batch '.$this->batch_id.', bot '.$bot->id.' removed.');
                 $this->publish($bot, [
@@ -399,9 +421,8 @@ class Batch
                 unset($this->bots_connected[$bot->id]);
                 unset($this->bots_retrying[$bot->id]);
             } catch (\Exception $e) {
-                $this->logger->err('Bot2hook batch '.$this->batch_id.', exception in Bot '.$bot->id.' connexion : '.$e->getMessage()."\"".$e->getTraceAsString());
-                $this->bots_retrying[$bot->id] = true;
-                unset($this->bots_connected[$bot->id]);
+                $this->logger->err('Bot2hook batch '.$this->batch_id.', exception in Bot '.$bot->id.' connexion : '.get_class($e).' '.$e->getMessage()."\n".$e->getTraceAsString());
+                $this->setToRetry($bot);
             }
         } else {
             if (!empty($this->bots_connected[$bot->id])) {
@@ -416,7 +437,7 @@ class Batch
     {
         unset($this->bots_connected[$bot->id]);
         $bot->closeClient();
-        $this->bots_retrying[$bot->id] = true;
+        $this->bots_retrying[$bot->id] = $bot->id;
     }
 
     protected function updateTeamBot(Bot $bot)
