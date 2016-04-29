@@ -277,6 +277,10 @@ class Server
                     $this->current_migrate_from->sendString(json_encode([
                         'type' => 'request_team',
                     ]));
+                    $this->batchs[$batch_id] =  [
+                        'launch_at' => time(),
+                        'client' => $this->current_migrate_to,
+                    ];
                 } else {
                     array_unshift($this->to_migrate, $batch_id);
                     array_unique($this->to_migrate);
