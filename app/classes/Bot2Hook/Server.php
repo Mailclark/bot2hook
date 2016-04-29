@@ -262,6 +262,8 @@ class Server
                 for ($i = $this->batch_count_active + 1; $i <= $this->batch_count_total; $i++) {
                     if (!empty($this->batchs[$i])) {
                         $this->current_migrate_to = $this->batchs[$i]['client'];
+                        $this->logger->err('Bot2hook server, migrate batch '.$batch_id.' to '.$i);
+                        break;
                     }
                 }
                 if (!empty($this->current_migrate_to)) {

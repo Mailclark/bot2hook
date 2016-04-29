@@ -347,7 +347,10 @@ class Batch
 
                 $slack_client->on("close", function () use ($bot) {
                     $this->logger->warn('Bot2hook batch '.$this->batch_id.', client closed for bot '.$bot->id);
-                    $this->setToRetry($bot);
+                    // If bot not in bots array, it's a migration : not retry
+                    if (!empty($this->bots[$bot->id])) {
+                        $this->setToRetry($bot);
+                    }
                 });
 
                 $slack_client->on("connect", function () use ($bot, $slack_client, $connected_callback) {
