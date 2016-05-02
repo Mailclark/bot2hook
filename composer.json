@@ -3,7 +3,7 @@
     "description": "Bot2Hook",
     "require": {
         "devristo/phpws": "dev-master",
-        "videlalvaro/php-amqplib": "^2.6",
+        "php-amqplib/php-amqplib": "^2.6",
         "php-curl-class/php-curl-class": "^4.8",
         "catfan/Medoo": "^1.0"
     },
