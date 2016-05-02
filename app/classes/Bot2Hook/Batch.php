@@ -27,6 +27,9 @@ class Batch
     /** @var WebSocketClient */
     protected $b2h_client;
 
+    /** @var bool */
+    protected $migration = false;
+
     /** @var int */
     protected $launch_at;
 
@@ -35,9 +38,6 @@ class Batch
 
     /** @var int */
     protected $batch_count;
-
-    /** @var bool */
-    protected $migration_status = false;
 
     /** @var Curl */
     protected $curl;
@@ -97,7 +97,7 @@ class Batch
             }
 
             $bot_connecting = count($this->bots_connected) - count(array_filter($this->bots_connected));
-            if ($bot_connecting < 1) {
+            if ($bot_connecting < $this->config['concurrent_connecting_count']) {
                 $tb_id = array_shift($this->bots_retrying);
                 if (!empty($tb_id)) {
                     $this->logger->debug('Bot2hook batch '.$this->batch_id.', try to reconnect client for bot '.$tb_id);
@@ -133,7 +133,8 @@ class Batch
                                 }
                             }
                         }
-                        $init = empty($this->batch_id) || !empty($data['force_init']);
+                        $init = empty($this->batch_id) || !empty($data['force_init']) || !empty($data['migration']);
+                        $this->migration = !empty($data['migration']);
                         $this->launch_at = $data['launch_at'];
                         $this->batch_id = $data['batch_id'];
                         $this->batch_count = $data['batch_count'];
@@ -141,30 +142,30 @@ class Batch
                         $init && $this->initFromDB();
                         break;
 
-                    case 'migration':
                     case 'add_bot':
                         $this->logger->debug('Bot2hook batch '.$this->batch_id.' receive from bot2hook server new bot '.json_encode($data['bot']));
-                        if ($data['type'] == 'migration' || $data['bot']['batch_id'] == $this->batch_id) {
+                        if ($data['bot']['batch_id'] == $this->batch_id) {
                             $bot = new Bot($data['bot']);
                             $this->updateTeamBot($bot);
                             $this->addSlackClient($bot);
                         }
                         break;
 
-                    case 'request_team':
-                        $this->batch_id = null;
-                        if (!empty($this->bots)) {
-                            $bot = array_shift($this->bots);
-                            $bot->closeClient();
-                            $this->b2h_client->send(json_encode([
-                                'type' => 'migration',
-                                'bot' => $bot,
-                            ]));
-                        } else {
-                            $this->b2h_client->send(json_encode([
-                                'type' => 'migration',
-                                'bot' => null,
-                            ]));
+                    case 'migration':
+                        $this->batch_id = 'migrated';
+                        if (!empty($data['end'])) {
+                            $this->logger->debug('Bot2hook batch '.$this->batch_id.' receive from bot2hook server message migration ending');
+                            if (!empty($this->bots)) {
+                                $this->logger->warn('Bot2hook batch '.$this->batch_id.'ending but still have '.count($this->bots).' bot(s)');
+                            }
+                            exit("restart after migration\n");
+                        }
+                        $this->logger->debug('Bot2hook batch '.$this->batch_id.' receive from bot2hook server a bot to disconnect '.json_encode($data['tb_id']));
+                        if (!empty($this->bots[$data['tb_id']])) {
+                            $this->bots[$data['tb_id']]->closeClient();
+                            unset($this->bots[$data['tb_id']]);
+                            unset($this->bots_connected[$data['tb_id']]);
+                            unset($this->bots_retrying[$data['tb_id']]);
                         }
                         break;
 
@@ -199,9 +200,7 @@ class Batch
 
         $this->b2h_client->on("close", function () {
             $this->logger->err('Bot2hook batch '.$this->batch_id.' loose connection to bot2hook server');
-            if (empty($this->batch_id)) {
-                exit("restart\n");
-            } else if ($this->migration_status) {
+            if (empty($this->batch_id) || $this->batch_id == 'migrated') {
                 exit("restart\n");
             }
         });
@@ -264,22 +263,33 @@ class Batch
         $end = false;
         $init_bot = function() use (&$tbs, &$init_bot, &$end) {
             if (empty($tbs)) {
-                !$end && $this->logger->debug('Bot2hook batch '.$this->batch_id.', end init');
+                if (!$end) {
+                    if ($this->migration) {
+                        $this->b2h_client->send(json_encode([
+                            'type' => 'migration',
+                            'end' => true,
+                        ]));
+                        $this->migration = false;
+                    }
+                    $this->logger->debug('Bot2hook batch '.$this->batch_id.', end init');
+                }
                 $end = true;
                 return;
             }
             $bot_connecting = count($this->bots_connected) - count(array_filter($this->bots_connected));
             if ($bot_connecting < $this->config['concurrent_connecting_count']) {
                 $tb = array_shift($tbs);
-                if (!empty($tb)) {
-                    $bot = Bot::fromDb($tb);
-                    $this->bots[$bot->id] = $bot;
-                    $this->logger->debug('Bot2hook batch '.$this->batch_id.', init bot '.$tb['tb_id'].' ('.count($this->bots).' bots, remaining '.count($tbs).')');
-                    $this->addSlackClient($bot, $init_bot);
-                    $this->loop->addTimer(1, $init_bot);
-                } else {
-                    $this->logger->debug('Bot2hook batch '.$this->batch_id.', end init');
+                if ($this->migration) {
+                    $this->b2h_client->send(json_encode([
+                        'type' => 'migration',
+                        'tb_id' => $tb['tb_id'],
+                    ]));
                 }
+                $bot = Bot::fromDb($tb);
+                $this->bots[$bot->id] = $bot;
+                $this->logger->debug('Bot2hook batch '.$this->batch_id.', init bot '.$tb['tb_id'].' ('.count($this->bots).' bots, remaining '.count($tbs).')');
+                $this->addSlackClient($bot, $init_bot);
+                $this->loop->addTimer(1, $init_bot);
             } else {
                 $this->loop->addTimer(1, $init_bot);
             }

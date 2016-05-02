@@ -106,17 +106,17 @@ class Server
                         break;
 
                     case 'migration':
-                        if (empty($data['bot'])) {
-                            $this->logger->debug("Bot2hook server, migration end");
-                            $this->current_migrate_from = null;
-                            $this->migration();
-                            break;
-                        }
-                        if (!empty($this->current_migrate_to)) {
-                            $this->logger->debug("Bot2hook server, migration bot receive " . json_encode($data['bot']));
-                            $this->current_migrate_to->sendString($message->getData());
+                        if (!empty($this->current_migrate_from)) {
+                            $this->logger->debug("Bot2hook server, migration message receive " . json_encode($data));
+                            $this->current_migrate_from->sendString($message->getData());
+
+                            if (!empty($data['end'])) {
+                                $this->logger->debug("Bot2hook server, migration end");
+                                $this->current_migrate_from = null;
+                                $this->migration();
+                            }
                         } else {
-                            $this->logger->err("Bot2hook server, migration bot receive but not have a batch to migrate " . json_encode($data['bot']));
+                            $this->logger->err("Bot2hook server, migration message receive but not have a batch to migrate " . json_encode($data));
                         }
                         break;
 
@@ -262,20 +262,19 @@ class Server
                 for ($i = $this->batch_count_active + 1; $i <= $this->batch_count_total; $i++) {
                     if (!empty($this->batchs[$i])) {
                         $this->current_migrate_to = $this->batchs[$i]['client'];
+                        $this->batchs[$i] = null;
                         $this->logger->err('Bot2hook server, migrate batch '.$batch_id.' to '.$i);
                         break;
                     }
                 }
                 if (!empty($this->current_migrate_to)) {
+                    $this->current_migrate_from = $this->batchs[$batch_id]['client'];
                     $this->current_migrate_to->sendString(json_encode([
                         'type' => 'set_id',
+                        'migration' => true,
                         'launch_at' => time(),
                         'batch_id' => $batch_id,
                         'batch_count' => $this->batch_count_active,
-                    ]));
-                    $this->current_migrate_from = $this->batchs[$batch_id]['client'];
-                    $this->current_migrate_from->sendString(json_encode([
-                        'type' => 'request_team',
                     ]));
                     $this->batchs[$batch_id] =  [
                         'launch_at' => time(),
