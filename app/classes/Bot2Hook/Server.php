@@ -121,6 +121,9 @@ class Server
                         break;
 
                     case 'request_status':
+                        if ($data['token'] != $this->config['reporting_token']) {
+                            break;
+                        }
                         $this->status = [];
                         $this->status_client = $client;
                         foreach($this->server->getConnections() as $client_connexion) {
@@ -129,6 +132,9 @@ class Server
                         break;
 
                     case 'request_reporting':
+                        if ($data['token'] != $this->config['reporting_token']) {
+                            break;
+                        }
                         $this->reporting = [];
                         $this->reporting_client = $client;
                         foreach($this->server->getConnections() as $client_connexion) {
@@ -168,6 +174,9 @@ class Server
                         break;
 
                     case 'request_migration':
+                        if ($data['token'] != $this->config['reporting_token']) {
+                            break;
+                        }
                         if (!empty($data['batch_id'])) {
                             if ($data['batch_id'] <= $this->batch_count_active) {
                                 $this->to_migrate[] = $data['batch_id'];
@@ -182,7 +191,6 @@ class Server
                         break;
 
                     case 'reporting':
-                        //@todo Update reporting cron
                         $this->reporting[] = $data;
                         if (count($this->reporting) == $this->batch_count_total) {
                             $this->reporting_client->sendString(json_encode($this->reporting));
@@ -190,7 +198,6 @@ class Server
                         break;
 
                     case 'status':
-                        //@todo Update status page
                         $this->status[] = $data;
                         if (count($this->status) == $this->batch_count_total) {
                             $this->status_client->sendString(json_encode($this->status));
