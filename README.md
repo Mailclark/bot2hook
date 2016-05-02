@@ -37,6 +37,7 @@ Execute these commands in the root folder.
 mkdir -m 777 -p storage
 mkdir -m 777 -p storage/sqlite
 mkdir -m 777 -p storage/logs
+mkdir -m 777 -p storage/logs/supervisor
 touch storage/logs/error.log
 chmod 777 storage/logs/error.log
 mkdir -m 777 -p storage/rabbitmq
