@@ -169,9 +169,9 @@ class Batch
                         }
                         break;
 
-                    case 'request_status':
+                    case 'request_metrics':
                         $this->b2h_client->send(json_encode([
-                            'type' => 'status',
+                            'type' => 'metrics',
                             'batch' => $this->batch_id,
                             'bots' => $this->bots,
                             'bots_connected' => $this->bots_connected,
@@ -179,9 +179,9 @@ class Batch
                         ]));
                         break;
 
-                    case 'request_reporting':
+                    case 'request_status':
                         $this->b2h_client->send(json_encode([
-                            'type' => 'reporting',
+                            'type' => 'status',
                             'batch' => $this->batch_id,
                             'memory' => [
                                 'usage' => memory_get_usage(true),

@@ -26,7 +26,7 @@ return array(
     ],
 
     'websocket' => [
-        'reporting_token' => 'update this value PLEASE !!!',
+        'request_token' => 'update this value PLEASE !!!',
         'url_for_server' => 'tcp://0.0.0.0:12345',
         'url_for_client' => 'ws://0.0.0.0:12345/',
         'sqlite_path' => DIR_STORAGE.'/sqlite/bot2hook.db',

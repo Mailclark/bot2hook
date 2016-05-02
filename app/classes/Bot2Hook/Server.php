@@ -29,16 +29,16 @@ class Server
     protected $batch_count_active;
 
     /** @var array */
+    protected $metrics;
+
+    /** @var WebSocketTransportInterface */
+    protected $metrics_client;
+
+    /** @var array */
     protected $status;
 
     /** @var WebSocketTransportInterface */
     protected $status_client;
-
-    /** @var array */
-    protected $reporting;
-
-    /** @var WebSocketTransportInterface */
-    protected $reporting_client;
 
     /** @var array */
     protected $to_migrate;
@@ -120,23 +120,23 @@ class Server
                         }
                         break;
 
-                    case 'request_status':
-                        if ($data['token'] != $this->config['reporting_token']) {
+                    case 'request_metrics':
+                        if ($data['token'] != $this->config['request_token']) {
                             break;
                         }
-                        $this->status = [];
-                        $this->status_client = $client;
+                        $this->metrics = [];
+                        $this->metrics_client = $client;
                         foreach($this->server->getConnections() as $client_connexion) {
                             $client_connexion->sendString($message->getData());
                         }
                         break;
 
-                    case 'request_reporting':
-                        if ($data['token'] != $this->config['reporting_token']) {
+                    case 'request_status':
+                        if ($data['token'] != $this->config['request_token']) {
                             break;
                         }
-                        $this->reporting = [];
-                        $this->reporting_client = $client;
+                        $this->status = [];
+                        $this->status_client = $client;
                         foreach($this->server->getConnections() as $client_connexion) {
                             $client_connexion->sendString($message->getData());
                         }
@@ -174,7 +174,7 @@ class Server
                         break;
 
                     case 'request_migration':
-                        if ($data['token'] != $this->config['reporting_token']) {
+                        if ($data['token'] != $this->config['request_token']) {
                             break;
                         }
                         if (!empty($data['batch_id'])) {
@@ -190,10 +190,10 @@ class Server
                         $this->migration();
                         break;
 
-                    case 'reporting':
-                        $this->reporting[] = $data;
-                        if (count($this->reporting) == $this->batch_count_total) {
-                            $this->reporting_client->sendString(json_encode($this->reporting));
+                    case 'metrics':
+                        $this->metrics[] = $data;
+                        if (count($this->metrics) == $this->batch_count_total) {
+                            $this->metrics_client->sendString(json_encode($this->metrics));
                         }
                         break;
 
