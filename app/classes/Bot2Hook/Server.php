@@ -154,6 +154,7 @@ class Server
             'tb_rooms',
         ]);
         $timer = 0;
+        $this->logger->debug('Init '.count($tbs).' bot(s)');
         foreach ($tbs as $tb) {
             $this->loop->addTimer($timer++, function() use ($tb) {
                 $bot = Bot::fromDb($tb);
