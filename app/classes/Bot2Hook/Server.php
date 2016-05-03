@@ -284,7 +284,14 @@ class Server
                     }
                 }
 
-                $slack_client->open();
+                $slack_client->open(15)->otherwise(function($e) use ($bot) {
+                    if ($e instanceof \Exception) {
+                        $this->logger->err('Client bot '.$bot->id.' fail to connect, promise exception during connexion : '.get_class($e).' '.$e->getMessage()."\n".$e->getTraceAsString());
+                    } else {
+                        $this->logger->err('Client bot '.$bot->id.' fail to connect, promise error during connexion'.$e);
+                    }
+                    $this->setToRetry($bot);
+                });
             } catch (InvalidTokenException $ite) {
                 $this->logger->err('Bot '.$bot->id.' removed.');
                 $this->publish($bot, [
