@@ -1,3 +1,5 @@
+**This project is archived. Slack has released the [Events API](https://api.slack.com/apis/connections/events-api) that achieves the same.**
+
 ![Bot2Hook - Turn Slack bots’ Real-Time Messaging events into webhooks — powered by Docker containers and brought to you by the makers of MailClark](https://mailclark.ai/static/img/logos/bot2hook.png)
 
 Ready to create a Slack bot, but not-so-ready to code a Real-Time Messaging app? Wondering how you’re going to maintain a bot across hundreds of teams?<br />
